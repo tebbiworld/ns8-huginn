@@ -5,23 +5,34 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
-# List the custom agent files currently installed in the custom_agents volume.
+# List the agents loaded by Huginn: the read-only agents shipped with the
+# module (bundled) and the ones uploaded by the administrator (custom).
 
 import os
 import sys
 import json
 
-state_dir = os.path.join(os.path.expanduser("~"), ".config", "state", "custom_agents")
+home = os.path.expanduser("~")
+bundled_dir = os.path.join(home, ".config", "huginn-init", "bundled-agents")
+custom_dir = os.path.join(home, ".config", "state", "custom_agents")
 
-agents = []
-if os.path.isdir(state_dir):
-    for filename in sorted(os.listdir(state_dir)):
-        if not filename.endswith(".rb"):
-            continue
-        full = os.path.join(state_dir, filename)
-        try:
-            agents.append({"filename": filename, "size": os.path.getsize(full)})
-        except OSError:
-            continue
+
+def collect(directory, bundled):
+    found = []
+    if os.path.isdir(directory):
+        for filename in sorted(os.listdir(directory)):
+            if not filename.endswith(".rb"):
+                continue
+            full = os.path.join(directory, filename)
+            try:
+                found.append(
+                    {"filename": filename, "size": os.path.getsize(full), "bundled": bundled}
+                )
+            except OSError:
+                continue
+    return found
+
+
+agents = collect(bundled_dir, True) + collect(custom_dir, False)
 
 json.dump({"agents": agents}, fp=sys.stdout)

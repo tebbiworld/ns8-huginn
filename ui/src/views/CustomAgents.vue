@@ -87,6 +87,7 @@
             <thead>
               <tr>
                 <th>{{ $t("agents.file_name") }}</th>
+                <th>{{ $t("agents.kind") }}</th>
                 <th>{{ $t("agents.size") }}</th>
                 <th></th>
               </tr>
@@ -94,9 +95,15 @@
             <tbody>
               <tr v-for="a in agents" :key="a.filename">
                 <td>{{ a.filename }}</td>
+                <td>
+                  <span :class="a.bundled ? 'tag-bundled' : 'tag-custom'">
+                    {{ a.bundled ? $t("agents.bundled") : $t("agents.custom") }}
+                  </span>
+                </td>
                 <td>{{ a.size }} B</td>
                 <td class="actions-cell">
                   <NsButton
+                    v-if="!a.bundled"
                     kind="danger--tertiary"
                     size="small"
                     :icon="TrashCan20"
@@ -104,6 +111,9 @@
                     @click="removeAgent(a.filename)"
                     >{{ $t("agents.remove") }}</NsButton
                   >
+                  <span v-else class="bundled-note">{{
+                    $t("agents.bundled_note")
+                  }}</span>
                 </td>
               </tr>
             </tbody>
@@ -364,5 +374,25 @@ export default {
 .empty {
   color: $text-02;
   margin: $spacing-05 0;
+}
+.tag-bundled,
+.tag-custom {
+  display: inline-block;
+  padding: 0 $spacing-03;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  line-height: 1.4rem;
+}
+.tag-bundled {
+  background-color: $ui-04;
+  color: $inverse-01;
+}
+.tag-custom {
+  background-color: $support-02;
+  color: $inverse-01;
+}
+.bundled-note {
+  color: $text-02;
+  font-size: 0.75rem;
 }
 </style>
