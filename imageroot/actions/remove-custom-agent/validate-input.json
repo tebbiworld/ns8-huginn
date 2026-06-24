@@ -1,0 +1,17 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Remove custom agent",
+    "$id": "http://nethserver.org/json-schema/task/input/huginn/remove-custom-agent",
+    "description": "Remove a custom Huginn agent Ruby file",
+    "type": "object",
+    "required": ["filename"],
+    "additionalProperties": false,
+    "properties": {
+        "filename": {
+            "type": "string",
+            "title": "Agent file name",
+            "pattern": "^[A-Za-z0-9_][A-Za-z0-9_-]*\\.rb$",
+            "maxLength": 128
+        }
+    }
+}

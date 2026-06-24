@@ -4,7 +4,7 @@
     "en": "Build agents that monitor and act on your behalf",
     "de": "Erstelle Agenten, die in deinem Namen überwachen und handeln"
   },
-  "categories": ["automation", "development"],
+  "categories": ["monitoring", "development"],
   "authors": [
     {
       "name": "tebbi",

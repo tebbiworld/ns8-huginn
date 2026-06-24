@@ -22,6 +22,12 @@ const routes = [
     component: Settings,
   },
   {
+    path: "/agents",
+    name: "CustomAgents",
+    component: () =>
+      import(/* webpackChunkName: "agents" */ "../views/CustomAgents.vue"),
+  },
+  {
     path: "/about",
     name: "About",
     // route level code-splitting

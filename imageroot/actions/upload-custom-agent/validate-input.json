@@ -1,0 +1,24 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Upload custom agent",
+    "$id": "http://nethserver.org/json-schema/task/input/huginn/upload-custom-agent",
+    "description": "Upload a custom Huginn agent Ruby file",
+    "type": "object",
+    "required": ["filename", "content"],
+    "additionalProperties": false,
+    "properties": {
+        "filename": {
+            "type": "string",
+            "title": "Agent file name",
+            "description": "Ruby file name, e.g. my_agent.rb",
+            "pattern": "^[A-Za-z0-9_][A-Za-z0-9_-]*\\.rb$",
+            "maxLength": 128
+        },
+        "content": {
+            "type": "string",
+            "title": "Ruby source",
+            "description": "The full Ruby source of the agent class",
+            "maxLength": 1048576
+        }
+    }
+}

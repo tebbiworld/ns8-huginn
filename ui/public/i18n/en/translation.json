@@ -48,6 +48,22 @@
         "admin_credentials_desc": "User \"{user}\" with password \"{password}\". Change it right after the first login.",
         "domain_already_used_in_traefik": "This host name is already used by another instance."
     },
+    "agents": {
+        "title": "Custom agents",
+        "description": "Upload your own Huginn agent Ruby files. They are loaded at startup. Adding or removing an agent restarts Huginn briefly.",
+        "upload_title": "Upload an agent",
+        "selected_file": "Selected file",
+        "upload": "Upload",
+        "installed_title": "Installed custom agents",
+        "no_agents": "No custom agents installed yet.",
+        "file_name": "File name",
+        "size": "Size",
+        "remove": "Remove",
+        "restart_title": "Huginn is restarting",
+        "restart_desc": "The change was saved. Huginn restarts to load the agent; this takes about a minute.",
+        "ruby_syntax_error": "The file has a Ruby syntax error and was not installed:",
+        "invalid_file_name": "Invalid file name. Use letters, digits, '_' or '-' and a .rb extension."
+    },
     "about": {
         "title": "About"
     },
@@ -62,7 +78,10 @@
         "get-name": "Get name",
         "list-backup-repositories": "List backup repositories",
         "list-backups": "List backups",
-        "list-installed-modules": "List installed modules"
+        "list-installed-modules": "List installed modules",
+        "list-custom-agents": "List custom agents",
+        "upload-custom-agent": "Upload custom agent",
+        "remove-custom-agent": "Remove custom agent"
     },
     "error": {
         "error": "Error",

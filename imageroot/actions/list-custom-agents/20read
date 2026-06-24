@@ -1,0 +1,27 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 tebbi
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# List the custom agent files currently installed in the custom_agents volume.
+
+import os
+import sys
+import json
+
+state_dir = os.path.join(os.path.expanduser("~"), ".config", "state", "custom_agents")
+
+agents = []
+if os.path.isdir(state_dir):
+    for filename in sorted(os.listdir(state_dir)):
+        if not filename.endswith(".rb"):
+            continue
+        full = os.path.join(state_dir, filename)
+        try:
+            agents.append({"filename": filename, "size": os.path.getsize(full)})
+        except OSError:
+            continue
+
+json.dump({"agents": agents}, fp=sys.stdout)

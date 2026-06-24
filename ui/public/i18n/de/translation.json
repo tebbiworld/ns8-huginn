@@ -60,6 +60,22 @@
         "node": "Knoten",
         "no_volumes": "Keine Volumen"
     },
+    "agents": {
+        "title": "Eigene Agenten",
+        "description": "Lade deine eigenen Huginn-Agent-Ruby-Dateien hoch. Sie werden beim Start geladen. Hinzufügen oder Entfernen startet Huginn kurz neu.",
+        "upload_title": "Agent hochladen",
+        "selected_file": "Ausgewählte Datei",
+        "upload": "Hochladen",
+        "installed_title": "Installierte eigene Agenten",
+        "no_agents": "Noch keine eigenen Agenten installiert.",
+        "file_name": "Dateiname",
+        "size": "Größe",
+        "remove": "Entfernen",
+        "restart_title": "Huginn startet neu",
+        "restart_desc": "Die Änderung wurde gespeichert. Huginn startet neu, um den Agenten zu laden; das dauert etwa eine Minute.",
+        "ruby_syntax_error": "Die Datei hat einen Ruby-Syntaxfehler und wurde nicht installiert:",
+        "invalid_file_name": "Ungültiger Dateiname. Erlaubt sind Buchstaben, Ziffern, '_' oder '-' und die Endung .rb."
+    },
     "about": {
         "title": "Über"
     },
@@ -71,7 +87,10 @@
         "get-status": "Status abrufen",
         "configure-module": "Modul konfigurieren",
         "get-configuration": "Konfiguration abrufen",
-        "get-name": "Name abrufen"
+        "get-name": "Name abrufen",
+        "list-custom-agents": "Eigene Agenten auflisten",
+        "upload-custom-agent": "Eigenen Agenten hochladen",
+        "remove-custom-agent": "Eigenen Agenten entfernen"
     },
     "task": {
         "cannot_create_task": "Aufgabe {action} kann nicht erstellt werden"
