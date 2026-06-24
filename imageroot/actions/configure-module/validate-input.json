@@ -8,7 +8,13 @@
             "host": "huginn.example.org",
             "http2https": true,
             "lets_encrypt": true,
-            "timezone": "Europe/Berlin"
+            "timezone": "Europe/Berlin",
+            "smtp_host": "smtp.example.org",
+            "smtp_port": 587,
+            "smtp_username": "huginn@example.org",
+            "smtp_password": "secret",
+            "smtp_starttls": true,
+            "smtp_from": "huginn@example.org"
         }
     ],
     "type": "object",
@@ -34,6 +40,38 @@
             "type": "string",
             "title": "Timezone",
             "description": "IANA timezone used by Huginn, like 'Europe/Berlin'."
+        },
+        "smtp_host": {
+            "type": "string",
+            "title": "SMTP server",
+            "description": "Mail relay host. Used only when no cluster smarthost is configured. Leave empty to disable manual mail settings."
+        },
+        "smtp_port": {
+            "type": "integer",
+            "title": "SMTP port",
+            "minimum": 1,
+            "maximum": 65535,
+            "description": "Mail relay TCP port (commonly 587 for STARTTLS or 25)."
+        },
+        "smtp_username": {
+            "type": "string",
+            "title": "SMTP username",
+            "description": "Authentication user for the mail relay (optional)."
+        },
+        "smtp_password": {
+            "type": "string",
+            "title": "SMTP password",
+            "description": "Authentication password for the mail relay (optional)."
+        },
+        "smtp_starttls": {
+            "type": "boolean",
+            "title": "SMTP STARTTLS",
+            "description": "Use STARTTLS to encrypt the connection to the mail relay."
+        },
+        "smtp_from": {
+            "type": "string",
+            "title": "Sender address",
+            "description": "From address used for outgoing mail. Defaults to huginn@<domain>."
         }
     }
 }

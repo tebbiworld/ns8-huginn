@@ -22,6 +22,10 @@ TimeoutStartSec=900
 TimeoutStopSec=70
 ExecStartPre=/bin/rm -f %t/huginn-app.pid %t/huginn-app.ctr-id
 ExecStartPre=-runagent discover-smarthost
+# Wait for MariaDB to pass its health check before starting Huginn, otherwise
+# the entrypoint runs db:migrate against a database that is still initialising
+# on first boot and the foreman process aborts.
+ExecStartPre=/bin/bash -c 'for i in $(seq 1 150); do [ "$(/usr/bin/podman inspect -f "{{.State.Health.Status}}" huginn-db 2>/dev/null)" = "healthy" ] && exit 0; sleep 2; done; echo "timeout waiting for huginn-db to become healthy" >&2; exit 1'
 ExecStart=/usr/bin/podman run \
     --conmon-pidfile %t/huginn-app.pid \
     --cidfile %t/huginn-app.ctr-id \

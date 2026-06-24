@@ -21,5 +21,16 @@ agent.set_env("TRAEFIK_HTTP2HTTPS", h2hs)
 if data.get("timezone"):
     agent.set_env("TZ", data["timezone"])
 
+# Optional manual SMTP relay. These values are only used by discover-smarthost
+# as a fallback when the cluster does NOT provide a smarthost. An empty host
+# disables the manual settings again.
+smtp_host = (data.get("smtp_host") or "").strip()
+agent.set_env("SMTP_MANUAL_HOST", smtp_host)
+agent.set_env("SMTP_MANUAL_PORT", str(data.get("smtp_port") or 587))
+agent.set_env("SMTP_MANUAL_USERNAME", data.get("smtp_username") or "")
+agent.set_env("SMTP_MANUAL_PASSWORD", data.get("smtp_password") or "")
+agent.set_env("SMTP_MANUAL_STARTTLS", "true" if data.get("smtp_starttls", True) else "false")
+agent.set_env("SMTP_MANUAL_FROM", data.get("smtp_from") or "")
+
 # Persist environment so the systemd units pick up the new values
 agent.dump_env()

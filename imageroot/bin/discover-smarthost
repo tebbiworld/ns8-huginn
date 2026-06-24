@@ -10,6 +10,11 @@
 # environment variables understood by Huginn, and write them to
 # state/smarthost.env which is loaded by the huginn-app container.
 #
+# Priority:
+#   1. the cluster smarthost, when one is configured and enabled
+#   2. the manual SMTP relay configured in this module (SMTP_MANUAL_*)
+#   3. nothing (Huginn keeps its built-in defaults / cannot send mail)
+#
 
 import sys
 import os
@@ -23,27 +28,52 @@ smtp = agent.get_smarthost_settings(rdb)
 # Derive a HELO/from domain from the configured public host name.
 host = os.environ.get("TRAEFIK_HOST", "")
 domain = host.split(".", 1)[1] if "." in host else (host or "localhost")
-from_address = f"huginn@{domain}"
-
-encrypt = (smtp.get("encrypt_smtp") or "none").lower()
-starttls = "true" if encrypt in ("starttls", "auto") else "false"
-authentication = "plain" if smtp.get("username") else ""
+default_from = f"huginn@{domain}"
 
 envfile = "smarthost.env"
 
+
+def write_settings(efp, *, server, port, user, password, starttls, from_address):
+    authentication = "plain" if user else ""
+    print(f"SMTP_SERVER={server}", file=efp)
+    print(f"SMTP_PORT={port}", file=efp)
+    print(f"SMTP_DOMAIN={domain}", file=efp)
+    print(f"SMTP_USER_NAME={user}", file=efp)
+    print(f"SMTP_PASSWORD={password}", file=efp)
+    print(f"SMTP_AUTHENTICATION={authentication}", file=efp)
+    print(f"SMTP_ENABLE_STARTTLS_AUTO={'true' if starttls else 'false'}", file=efp)
+    print(f"EMAIL_FROM_ADDRESS={from_address or default_from}", file=efp)
+
+
 # Use a .tmp suffix so the target file is only replaced once fully written.
 with open(envfile + ".tmp", "w") as efp:
+    manual_host = os.environ.get("SMTP_MANUAL_HOST", "").strip()
+
     if smtp.get("enabled"):
-        print(f"SMTP_SERVER={smtp['host']}", file=efp)
-        print(f"SMTP_PORT={smtp['port']}", file=efp)
-        print(f"SMTP_DOMAIN={domain}", file=efp)
-        print(f"SMTP_USER_NAME={smtp.get('username', '')}", file=efp)
-        print(f"SMTP_PASSWORD={smtp.get('password', '')}", file=efp)
-        print(f"SMTP_AUTHENTICATION={authentication}", file=efp)
-        print(f"SMTP_ENABLE_STARTTLS_AUTO={starttls}", file=efp)
-        print(f"EMAIL_FROM_ADDRESS={from_address}", file=efp)
+        # 1) cluster smarthost
+        encrypt = (smtp.get("encrypt_smtp") or "none").lower()
+        write_settings(
+            efp,
+            server=smtp["host"],
+            port=smtp["port"],
+            user=smtp.get("username", ""),
+            password=smtp.get("password", ""),
+            starttls=encrypt in ("starttls", "auto"),
+            from_address=default_from,
+        )
+    elif manual_host:
+        # 2) manual relay configured in this module
+        write_settings(
+            efp,
+            server=manual_host,
+            port=os.environ.get("SMTP_MANUAL_PORT", "587"),
+            user=os.environ.get("SMTP_MANUAL_USERNAME", ""),
+            password=os.environ.get("SMTP_MANUAL_PASSWORD", ""),
+            starttls=os.environ.get("SMTP_MANUAL_STARTTLS", "true") == "true",
+            from_address=os.environ.get("SMTP_MANUAL_FROM", "") or default_from,
+        )
     else:
-        # Keep the file present but empty when no relay is configured.
+        # 3) Keep the file present but empty when no relay is configured.
         print("# smarthost not configured", file=efp)
 
 # Commit the change atomically.
