@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #
-# Copyright (C) 2026 Thorsten Ebbinghaus
+# Copyright (C) 2026 tebbi
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
