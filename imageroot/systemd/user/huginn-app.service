@@ -51,6 +51,7 @@ ExecStart=/usr/bin/podman run \
     --env SEED_PASSWORD=${SEED_PASSWORD} \
     --env TZ=${TZ} \
     --volume %S/state/custom_agents:/app/custom_agents:Z \
+    --volume %S/huginn-init/bundled-agents:/app/bundled_agents:ro,Z \
     --volume %S/huginn-init/zz_custom_agents.rb:/app/config/initializers/zz_custom_agents.rb:ro,Z \
     ${HUGINN_IMAGE}
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/huginn-app.ctr-id -t 30
