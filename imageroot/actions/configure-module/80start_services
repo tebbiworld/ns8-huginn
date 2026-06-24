@@ -1,0 +1,20 @@
+#!/bin/bash
+
+#
+# Copyright (C) 2026 Thorsten Ebbinghaus
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+set -e
+
+# Redirect any output to the journal (stderr)
+exec 1>&2
+
+# Ensure the smarthost env file exists before the units reference it
+touch smarthost.env
+
+# Refresh SMTP settings from the cluster smarthost
+runagent discover-smarthost || true
+
+# Enable and (re)start the pod so configuration changes are applied
+systemctl --user enable huginn.service
+systemctl --user restart huginn.service

@@ -1,0 +1,35 @@
+#
+# Copyright (C) 2026 Thorsten Ebbinghaus
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# This unit creates the rootless Podman pod that hosts the Huginn web
+# application and its MariaDB database. The two containers share the pod
+# network namespace, so Huginn reaches the database on 127.0.0.1.
+
+[Unit]
+Description=Huginn pod
+Requires=huginn-db.service huginn-app.service
+Before=huginn-db.service huginn-app.service
+
+[Service]
+Environment=PODMAN_SYSTEMD_UNIT=%n
+EnvironmentFile=%S/state/environment
+WorkingDirectory=%S/state
+Restart=always
+TimeoutStopSec=70
+ExecStartPre=/bin/rm -f %t/huginn.pid %t/huginn.pod-id
+ExecStartPre=/usr/bin/podman pod create \
+    --infra-conmon-pidfile %t/huginn.pid \
+    --pod-id-file %t/huginn.pod-id \
+    --name huginn \
+    --publish 127.0.0.1:${TCP_PORT}:3000 \
+    --replace
+ExecStart=/usr/bin/podman pod start --pod-id-file %t/huginn.pod-id
+ExecStop=/usr/bin/podman pod stop --ignore --pod-id-file %t/huginn.pod-id -t 30
+ExecStopPost=/usr/bin/podman pod rm --ignore -f --pod-id-file %t/huginn.pod-id
+PIDFile=%t/huginn.pid
+Type=forking
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,27 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 Thorsten Ebbinghaus
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+import os
+import sys
+import json
+import agent
+
+config = {}
+
+config["host"] = os.getenv("TRAEFIK_HOST", "")
+config["http2https"] = os.getenv("TRAEFIK_HTTP2HTTPS") == "True"
+config["timezone"] = os.getenv("TZ", "UTC")
+
+route = agent.get_route(os.environ["MODULE_ID"])
+config["lets_encrypt"] = route.get("lets_encrypt", False)
+
+# Initial admin credentials seeded on first start (the password is only valid
+# until the administrator changes it inside Huginn).
+config["admin_username"] = os.getenv("SEED_USERNAME", "admin")
+config["admin_password"] = os.getenv("SEED_PASSWORD", "")
+
+json.dump(config, fp=sys.stdout)

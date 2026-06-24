@@ -1,0 +1,25 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 Thorsten Ebbinghaus
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+import sys
+import json
+import agent
+
+data = json.load(sys.stdin)
+
+host = data.get("host")
+h2hs = data.get("http2https", True)
+
+agent.set_env("TRAEFIK_HOST", host)
+agent.set_env("TRAEFIK_HTTP2HTTPS", h2hs)
+
+# Optional timezone override for Huginn
+if data.get("timezone"):
+    agent.set_env("TZ", data["timezone"])
+
+# Persist environment so the systemd units pick up the new values
+agent.dump_env()

@@ -1,0 +1,56 @@
+#
+# Copyright (C) 2026 Thorsten Ebbinghaus
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# Huginn web application and background workers (single all-in-one container,
+# external database). It joins the huginn pod and talks to MariaDB on
+# 127.0.0.1. The container entrypoint runs db:migrate / db:seed on start.
+
+[Unit]
+Description=Huginn application
+BindsTo=huginn.service
+After=huginn.service huginn-db.service
+
+[Service]
+Environment=PODMAN_SYSTEMD_UNIT=%n
+EnvironmentFile=%S/state/environment
+EnvironmentFile=-%S/state/smarthost.env
+WorkingDirectory=%S/state
+Restart=always
+TimeoutStartSec=900
+TimeoutStopSec=70
+ExecStartPre=/bin/rm -f %t/huginn-app.pid %t/huginn-app.ctr-id
+ExecStartPre=-runagent discover-smarthost
+ExecStart=/usr/bin/podman run \
+    --conmon-pidfile %t/huginn-app.pid \
+    --cidfile %t/huginn-app.ctr-id \
+    --cgroups=no-conmon \
+    --pod-id-file %t/huginn.pod-id \
+    --replace -d --name huginn-app \
+    --env-file smarthost.env \
+    --env DATABASE_ADAPTER=mysql2 \
+    --env DATABASE_HOST=127.0.0.1 \
+    --env DATABASE_PORT=3306 \
+    --env DATABASE_ENCODING=utf8mb4 \
+    --env DATABASE_NAME=huginn \
+    --env DATABASE_USERNAME=huginn \
+    --env DATABASE_PASSWORD=${MARIADB_PASSWORD} \
+    --env DO_NOT_CREATE_DATABASE=true \
+    --env APP_SECRET_TOKEN=${APP_SECRET_TOKEN} \
+    --env DOMAIN=${TRAEFIK_HOST} \
+    --env RAILS_ENV=production \
+    --env FORCE_SSL=false \
+    --env SEED_USERNAME=${SEED_USERNAME} \
+    --env SEED_PASSWORD=${SEED_PASSWORD} \
+    --env TZ=${TZ} \
+    ${HUGINN_IMAGE}
+ExecStop=/usr/bin/podman stop --ignore --cidfile %t/huginn-app.ctr-id -t 30
+ExecReload=/usr/bin/podman kill -s HUP huginn-app
+ExecStopPost=/usr/bin/podman rm --ignore -f --cidfile %t/huginn-app.ctr-id
+PIDFile=%t/huginn-app.pid
+Type=forking
+SyslogIdentifier=%u
+
+[Install]
+WantedBy=default.target

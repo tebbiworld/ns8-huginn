@@ -1,0 +1,15 @@
+#!/bin/bash
+
+#
+# Copyright (C) 2026 Thorsten Ebbinghaus
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+set -e
+
+# Refresh the SMTP env file and restart the app container so Huginn picks up
+# the new mail relay settings. Do nothing if the module is not running yet.
+if systemctl --user is-enabled --quiet huginn.service; then
+    runagent discover-smarthost || true
+    systemctl --user restart huginn-app.service
+fi

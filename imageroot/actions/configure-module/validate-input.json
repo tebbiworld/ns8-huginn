@@ -1,0 +1,39 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Configure huginn",
+    "$id": "http://nethserver.org/json-schema/task/input/huginn/configure-module",
+    "description": "Configure the Huginn module",
+    "examples": [
+        {
+            "host": "huginn.example.org",
+            "http2https": true,
+            "lets_encrypt": true,
+            "timezone": "Europe/Berlin"
+        }
+    ],
+    "type": "object",
+    "required": ["host"],
+    "properties": {
+        "host": {
+            "type": "string",
+            "description": "Fully qualified domain name for Huginn, like 'huginn.example.org'",
+            "format": "hostname",
+            "pattern": "\\."
+        },
+        "lets_encrypt": {
+            "type": "boolean",
+            "title": "Let's Encrypt certificate",
+            "description": "Request a valid Let's Encrypt certificate for the host name."
+        },
+        "http2https": {
+            "type": "boolean",
+            "title": "HTTP to HTTPS redirection",
+            "description": "Redirect all HTTP requests to HTTPS."
+        },
+        "timezone": {
+            "type": "string",
+            "title": "Timezone",
+            "description": "IANA timezone used by Huginn, like 'Europe/Berlin'."
+        }
+    }
+}

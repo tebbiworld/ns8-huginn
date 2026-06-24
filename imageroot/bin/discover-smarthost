@@ -1,0 +1,50 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 Thorsten Ebbinghaus
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+#
+# Translate the cluster smarthost (mail relay) settings into the SMTP_*
+# environment variables understood by Huginn, and write them to
+# state/smarthost.env which is loaded by the huginn-app container.
+#
+
+import sys
+import os
+import agent
+
+# Connect the local Redis replica so the service still starts when the leader
+# node is unreachable.
+rdb = agent.redis_connect(use_replica=True)
+smtp = agent.get_smarthost_settings(rdb)
+
+# Derive a HELO/from domain from the configured public host name.
+host = os.environ.get("TRAEFIK_HOST", "")
+domain = host.split(".", 1)[1] if "." in host else (host or "localhost")
+from_address = f"huginn@{domain}"
+
+encrypt = (smtp.get("encrypt_smtp") or "none").lower()
+starttls = "true" if encrypt in ("starttls", "auto") else "false"
+authentication = "plain" if smtp.get("username") else ""
+
+envfile = "smarthost.env"
+
+# Use a .tmp suffix so the target file is only replaced once fully written.
+with open(envfile + ".tmp", "w") as efp:
+    if smtp.get("enabled"):
+        print(f"SMTP_SERVER={smtp['host']}", file=efp)
+        print(f"SMTP_PORT={smtp['port']}", file=efp)
+        print(f"SMTP_DOMAIN={domain}", file=efp)
+        print(f"SMTP_USER_NAME={smtp.get('username', '')}", file=efp)
+        print(f"SMTP_PASSWORD={smtp.get('password', '')}", file=efp)
+        print(f"SMTP_AUTHENTICATION={authentication}", file=efp)
+        print(f"SMTP_ENABLE_STARTTLS_AUTO={starttls}", file=efp)
+        print(f"EMAIL_FROM_ADDRESS={from_address}", file=efp)
+    else:
+        # Keep the file present but empty when no relay is configured.
+        print("# smarthost not configured", file=efp)
+
+# Commit the change atomically.
+os.replace(envfile + ".tmp", envfile)

@@ -1,0 +1,47 @@
+#
+# Copyright (C) 2026 Thorsten Ebbinghaus
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# MariaDB database backing the Huginn application. It joins the huginn pod
+# and stores its data in the rootless named volume "huginn-mysql".
+
+[Unit]
+Description=Huginn MariaDB database
+BindsTo=huginn.service
+After=huginn.service
+
+[Service]
+Environment=PODMAN_SYSTEMD_UNIT=%n
+EnvironmentFile=%S/state/environment
+WorkingDirectory=%S/state
+Restart=always
+TimeoutStopSec=70
+ExecStartPre=/bin/rm -f %t/huginn-db.pid %t/huginn-db.ctr-id
+ExecStart=/usr/bin/podman run \
+    --conmon-pidfile %t/huginn-db.pid \
+    --cidfile %t/huginn-db.ctr-id \
+    --cgroups=no-conmon \
+    --pod-id-file %t/huginn.pod-id \
+    --replace -d --name huginn-db \
+    --volume huginn-mysql:/var/lib/mysql:Z \
+    --env MARIADB_DATABASE=huginn \
+    --env MARIADB_USER=huginn \
+    --env MARIADB_PASSWORD=${MARIADB_PASSWORD} \
+    --env MARIADB_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD} \
+    --health-cmd "healthcheck.sh --connect --innodb_initialized" \
+    --health-interval 10s \
+    --health-timeout 5s \
+    --health-retries 12 \
+    ${MARIADB_IMAGE} \
+    --character-set-server=utf8mb4 \
+    --collation-server=utf8mb4_unicode_ci
+ExecStop=/usr/bin/podman stop --ignore --cidfile %t/huginn-db.ctr-id -t 30
+ExecReload=/usr/bin/podman kill -s HUP huginn-db
+ExecStopPost=/usr/bin/podman rm --ignore -f --cidfile %t/huginn-db.ctr-id
+PIDFile=%t/huginn-db.pid
+Type=forking
+SyslogIdentifier=%u
+
+[Install]
+WantedBy=default.target
