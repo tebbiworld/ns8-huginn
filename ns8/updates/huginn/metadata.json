@@ -1,0 +1,20 @@
+{
+  "name": "Huginn",
+  "description": {
+    "en": "Build agents that monitor and act on your behalf",
+    "de": "Erstelle Agenten, die in deinem Namen überwachen und handeln"
+  },
+  "categories": ["monitoring", "development"],
+  "authors": [
+    {
+      "name": "tebbi",
+      "email": "info@ebbinghaus.world"
+    }
+  ],
+  "docs": {
+    "documentation_url": "https://github.com/huginn/huginn/wiki",
+    "bug_url": "https://github.com/tebbiworld/ns8-huginn/issues",
+    "code_url": "https://github.com/tebbiworld/ns8-huginn"
+  },
+  "source": "ghcr.io/tebbiworld/huginn"
+}
