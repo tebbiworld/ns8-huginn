@@ -31,6 +31,10 @@ agent.set_env("SMTP_MANUAL_USERNAME", data.get("smtp_username") or "")
 agent.set_env("SMTP_MANUAL_PASSWORD", data.get("smtp_password") or "")
 agent.set_env("SMTP_MANUAL_STARTTLS", "true" if data.get("smtp_starttls", True) else "false")
 agent.set_env("SMTP_MANUAL_FROM", data.get("smtp_from") or "")
+# Verify the relay's TLS certificate. Applies to both the manual relay and the
+# cluster smarthost fallback (see discover-smarthost). Disable it for internal
+# relays that present a certificate not valid for their address.
+agent.set_env("SMTP_MANUAL_SSL_VERIFY", "true" if data.get("smtp_ssl_verify", True) else "false")
 
 # Persist environment so the systemd units pick up the new values
 agent.dump_env()

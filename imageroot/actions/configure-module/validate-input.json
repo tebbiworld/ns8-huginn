@@ -14,6 +14,7 @@
             "smtp_username": "huginn@example.org",
             "smtp_password": "secret",
             "smtp_starttls": true,
+            "smtp_ssl_verify": true,
             "smtp_from": "huginn@example.org"
         }
     ],
@@ -67,6 +68,11 @@
             "type": "boolean",
             "title": "SMTP STARTTLS",
             "description": "Use STARTTLS to encrypt the connection to the mail relay."
+        },
+        "smtp_ssl_verify": {
+            "type": "boolean",
+            "title": "Verify TLS certificate",
+            "description": "Verify the mail relay's TLS certificate. Disable for internal relays (e.g. the cluster smarthost) whose certificate is not valid for their address."
         },
         "smtp_from": {
             "type": "string",

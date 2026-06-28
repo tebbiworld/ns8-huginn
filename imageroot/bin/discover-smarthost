@@ -11,9 +11,15 @@
 # state/smarthost.env which is loaded by the huginn-app container.
 #
 # Priority:
-#   1. the cluster smarthost, when one is configured and enabled
-#   2. the manual SMTP relay configured in this module (SMTP_MANUAL_*)
+#   1. the manual SMTP relay configured in this module (SMTP_MANUAL_*), so an
+#      administrator can always override the cluster default from the GUI
+#   2. the cluster smarthost, when one is configured and enabled
 #   3. nothing (Huginn keeps its built-in defaults / cannot send mail)
+#
+# SMTP_OPENSSL_VERIFY_MODE is derived from SMTP_MANUAL_SSL_VERIFY and applies to
+# both relays: the internal cluster smarthost presents a certificate that is not
+# valid for its WireGuard address, so certificate verification has to be turned
+# off there, while a public manual relay normally wants it on.
 #
 
 import sys
@@ -32,6 +38,11 @@ default_from = f"huginn@{domain}"
 
 envfile = "smarthost.env"
 
+# Verify the SMTP server's TLS certificate? Defaults to verifying; the value is
+# seeded by create-module (off when a cluster smarthost exists) and can be
+# changed from the module Settings page.
+ssl_verify = os.environ.get("SMTP_MANUAL_SSL_VERIFY", "true") == "true"
+
 
 def write_settings(efp, *, server, port, user, password, starttls, from_address):
     authentication = "plain" if user else ""
@@ -43,14 +54,28 @@ def write_settings(efp, *, server, port, user, password, starttls, from_address)
     print(f"SMTP_AUTHENTICATION={authentication}", file=efp)
     print(f"SMTP_ENABLE_STARTTLS_AUTO={'true' if starttls else 'false'}", file=efp)
     print(f"EMAIL_FROM_ADDRESS={from_address or default_from}", file=efp)
+    # Empty value = Ruby default (verify); "none" disables certificate checks.
+    print(f"SMTP_OPENSSL_VERIFY_MODE={'' if ssl_verify else 'none'}", file=efp)
 
 
 # Use a .tmp suffix so the target file is only replaced once fully written.
 with open(envfile + ".tmp", "w") as efp:
     manual_host = os.environ.get("SMTP_MANUAL_HOST", "").strip()
 
-    if smtp.get("enabled"):
-        # 1) cluster smarthost
+    if manual_host:
+        # 1) manual relay configured in this module (takes priority so the GUI
+        #    field always wins over the cluster default)
+        write_settings(
+            efp,
+            server=manual_host,
+            port=os.environ.get("SMTP_MANUAL_PORT", "587"),
+            user=os.environ.get("SMTP_MANUAL_USERNAME", ""),
+            password=os.environ.get("SMTP_MANUAL_PASSWORD", ""),
+            starttls=os.environ.get("SMTP_MANUAL_STARTTLS", "true") == "true",
+            from_address=os.environ.get("SMTP_MANUAL_FROM", "") or default_from,
+        )
+    elif smtp.get("enabled"):
+        # 2) cluster smarthost as fallback
         encrypt = (smtp.get("encrypt_smtp") or "none").lower()
         write_settings(
             efp,
@@ -60,17 +85,6 @@ with open(envfile + ".tmp", "w") as efp:
             password=smtp.get("password", ""),
             starttls=encrypt in ("starttls", "auto"),
             from_address=default_from,
-        )
-    elif manual_host:
-        # 2) manual relay configured in this module
-        write_settings(
-            efp,
-            server=manual_host,
-            port=os.environ.get("SMTP_MANUAL_PORT", "587"),
-            user=os.environ.get("SMTP_MANUAL_USERNAME", ""),
-            password=os.environ.get("SMTP_MANUAL_PASSWORD", ""),
-            starttls=os.environ.get("SMTP_MANUAL_STARTTLS", "true") == "true",
-            from_address=os.environ.get("SMTP_MANUAL_FROM", "") or default_from,
         )
     else:
         # 3) Keep the file present but empty when no relay is configured.

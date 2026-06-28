@@ -123,6 +123,17 @@
               <template slot="text-left">{{ $t("settings.disabled") }}</template>
               <template slot="text-right">{{ $t("settings.enabled") }}</template>
             </cv-toggle>
+            <cv-toggle
+              value="smtp_ssl_verify"
+              :label="$t('settings.smtp_ssl_verify')"
+              v-model="smtp_ssl_verify"
+              :disabled="loading.getConfiguration || loading.configureModule"
+              class="toggle"
+            >
+              <template slot="text-left">{{ $t("settings.disabled") }}</template>
+              <template slot="text-right">{{ $t("settings.enabled") }}</template>
+            </cv-toggle>
+            <div class="section-help">{{ $t("settings.smtp_ssl_verify_help") }}</div>
             <NsInlineNotification
               v-if="admin_username"
               kind="info"
@@ -198,6 +209,7 @@ export default {
       smtp_username: "",
       smtp_password: "",
       smtp_starttls: true,
+      smtp_ssl_verify: true,
       smtp_from: "",
       admin_username: "",
       admin_password: "",
@@ -286,6 +298,8 @@ export default {
       this.smtp_password = config.smtp_password || "";
       this.smtp_starttls =
         config.smtp_starttls === undefined ? true : !!config.smtp_starttls;
+      this.smtp_ssl_verify =
+        config.smtp_ssl_verify === undefined ? true : !!config.smtp_ssl_verify;
       this.smtp_from = config.smtp_from || "";
       this.admin_username = config.admin_username || "";
       this.admin_password = config.admin_password || "";
@@ -364,6 +378,7 @@ export default {
             smtp_username: this.smtp_username,
             smtp_password: this.smtp_password,
             smtp_starttls: this.smtp_starttls,
+            smtp_ssl_verify: this.smtp_ssl_verify,
             smtp_from: this.smtp_from,
           },
           extra: {

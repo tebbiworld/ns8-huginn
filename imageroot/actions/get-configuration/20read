@@ -25,6 +25,7 @@ config["smtp_port"] = int(os.getenv("SMTP_MANUAL_PORT", "587") or 587)
 config["smtp_username"] = os.getenv("SMTP_MANUAL_USERNAME", "")
 config["smtp_password"] = os.getenv("SMTP_MANUAL_PASSWORD", "")
 config["smtp_starttls"] = os.getenv("SMTP_MANUAL_STARTTLS", "true") == "true"
+config["smtp_ssl_verify"] = os.getenv("SMTP_MANUAL_SSL_VERIFY", "true") == "true"
 config["smtp_from"] = os.getenv("SMTP_MANUAL_FROM", "")
 
 # Initial admin credentials seeded on first start (the password is only valid

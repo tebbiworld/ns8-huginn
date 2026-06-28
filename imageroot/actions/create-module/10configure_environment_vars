@@ -29,5 +29,19 @@ agent.set_env("SEED_PASSWORD", secrets.token_urlsafe(12))
 # Default timezone; can be overridden later from configure-module.
 agent.set_env("TZ", "UTC")
 
+# Decide the default SMTP certificate-verification behaviour. When the cluster
+# already provides a mail smarthost we will fall back to it (see
+# discover-smarthost), but that internal relay is reached over WireGuard and its
+# certificate is not valid for that address, so verification has to be off by
+# default. Without a cluster smarthost the administrator will point Huginn at a
+# normal public relay, where verifying the certificate is the safe default.
+try:
+    rdb = agent.redis_connect(use_replica=True)
+    cluster_smarthost = bool(agent.get_smarthost_settings(rdb).get("enabled"))
+except Exception:
+    cluster_smarthost = False
+
+agent.set_env("SMTP_MANUAL_SSL_VERIFY", "false" if cluster_smarthost else "true")
+
 # Dump the environment file to disk
 agent.dump_env()

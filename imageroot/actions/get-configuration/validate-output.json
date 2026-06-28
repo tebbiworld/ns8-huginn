@@ -9,6 +9,13 @@
         "http2https": { "type": "boolean" },
         "lets_encrypt": { "type": "boolean" },
         "timezone": { "type": "string" },
+        "smtp_host": { "type": "string" },
+        "smtp_port": { "type": "integer" },
+        "smtp_username": { "type": "string" },
+        "smtp_password": { "type": "string" },
+        "smtp_starttls": { "type": "boolean" },
+        "smtp_ssl_verify": { "type": "boolean" },
+        "smtp_from": { "type": "string" },
         "admin_username": { "type": "string" },
         "admin_password": { "type": "string" }
     }
