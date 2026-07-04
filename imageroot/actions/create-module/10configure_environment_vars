@@ -29,6 +29,29 @@ agent.set_env("SEED_PASSWORD", secrets.token_urlsafe(12))
 # Default timezone; can be overridden later from configure-module.
 agent.set_env("TZ", "UTC")
 
+# Security-sensitive Huginn feature switches. Both default to the safe "off"
+# state and can be flipped later from configure-module / the Settings UI.
+#   ENABLE_INSECURE_AGENTS           -> unlocks ShellCommandAgent + LocalFileAgent
+#   ENABLE_SECOND_PRECISION_SCHEDULE -> allows second-precision SchedulerAgent cron
+agent.set_env("ENABLE_INSECURE_AGENTS", "false")
+agent.set_env("ENABLE_SECOND_PRECISION_SCHEDULE", "false")
+
+# Registration hardening. Huginn ships a *publicly known* default invitation
+# code ("try-huginn"), so anyone who can reach the instance could self-register.
+# Seed a random code instead; the administrator can read or change it later from
+# the Settings UI and hand it out to the people who should be allowed to sign up.
+agent.set_env("INVITATION_CODE", secrets.token_urlsafe(12))
+# Do not force e-mail confirmation by default (a fresh instance may not have a
+# working mail relay yet). Can be turned on later from configure-module.
+agent.set_env("REQUIRE_CONFIRMED_EMAIL", "false")
+
+# Global fallback credentials for the built-in OpenAI agents (LLM, image, speech,
+# video). Empty by default; can be set per-agent instead. OPENAI_BASE_URL lets
+# the same agents talk to a compatible endpoint (e.g. Ollama at
+# http://host:11434/v1).
+agent.set_env("OPENAI_API_KEY", "")
+agent.set_env("OPENAI_BASE_URL", "")
+
 # Decide the default SMTP certificate-verification behaviour. When the cluster
 # already provides a mail smarthost we will fall back to it (see
 # discover-smarthost), but that internal relay is reached over WireGuard and its

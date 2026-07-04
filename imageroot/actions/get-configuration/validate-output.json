@@ -16,6 +16,12 @@
         "smtp_starttls": { "type": "boolean" },
         "smtp_ssl_verify": { "type": "boolean" },
         "smtp_from": { "type": "string" },
+        "enable_insecure_agents": { "type": "boolean" },
+        "enable_second_precision_schedule": { "type": "boolean" },
+        "invitation_code": { "type": "string" },
+        "require_confirmed_email": { "type": "boolean" },
+        "openai_api_key": { "type": "string" },
+        "openai_base_url": { "type": "string" },
         "admin_username": { "type": "string" },
         "admin_password": { "type": "string" }
     }

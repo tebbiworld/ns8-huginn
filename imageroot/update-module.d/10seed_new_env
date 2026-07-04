@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 tebbi
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+#
+# Runs on module update through the node agent's update-module.d hook
+# (actions/update-module/50run_scriptdir). Instances created by a version older
+# than 1.2.0 never had create-module seed the environment variables introduced
+# in 1.2.0, so the app unit would expand them to empty strings. Empty values are
+# harmless for the boolean/OpenAI settings, but an empty INVITATION_CODE would
+# override Huginn's built-in default ("try-huginn") and weaken signup
+# protection. Seed any *missing* key here so the values are correct the next
+# time the pod is (re)started. Existing, administrator-set values are preserved.
+#
+
+import os
+import secrets
+import agent
+
+envfile = os.path.join(os.environ["AGENT_STATE_DIR"], "environment")
+env = agent.read_envfile(envfile)
+
+
+def ensure(key, value):
+    # Seed when the key is unset or empty. For INVITATION_CODE this replaces a
+    # would-be empty value with a random code, matching create-module.
+    if not env.get(key):
+        agent.set_env(key, value)
+
+
+ensure("INVITATION_CODE", secrets.token_urlsafe(12))
+
+# Make sure these keys always exist so the app unit's ${VAR} references are
+# defined. Defaults keep the safe/off behaviour; empty OpenAI values simply let
+# the agents fall back to their own defaults or per-agent credentials.
+for key, default in (
+    ("ENABLE_INSECURE_AGENTS", "false"),
+    ("ENABLE_SECOND_PRECISION_SCHEDULE", "false"),
+    ("REQUIRE_CONFIRMED_EMAIL", "false"),
+    ("OPENAI_API_KEY", ""),
+    ("OPENAI_BASE_URL", ""),
+):
+    if key not in env:
+        agent.set_env(key, default)

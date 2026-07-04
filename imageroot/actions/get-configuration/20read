@@ -28,6 +28,16 @@ config["smtp_starttls"] = os.getenv("SMTP_MANUAL_STARTTLS", "true") == "true"
 config["smtp_ssl_verify"] = os.getenv("SMTP_MANUAL_SSL_VERIFY", "true") == "true"
 config["smtp_from"] = os.getenv("SMTP_MANUAL_FROM", "")
 
+# Security-sensitive Huginn feature switches (default off).
+config["enable_insecure_agents"] = os.getenv("ENABLE_INSECURE_AGENTS", "false") == "true"
+config["enable_second_precision_schedule"] = os.getenv("ENABLE_SECOND_PRECISION_SCHEDULE", "false") == "true"
+
+# Registration and OpenAI defaults.
+config["invitation_code"] = os.getenv("INVITATION_CODE", "")
+config["require_confirmed_email"] = os.getenv("REQUIRE_CONFIRMED_EMAIL", "false") == "true"
+config["openai_api_key"] = os.getenv("OPENAI_API_KEY", "")
+config["openai_base_url"] = os.getenv("OPENAI_BASE_URL", "")
+
 # Initial admin credentials seeded on first start (the password is only valid
 # until the administrator changes it inside Huginn).
 config["admin_username"] = os.getenv("SEED_USERNAME", "admin")

@@ -15,7 +15,13 @@
             "smtp_password": "secret",
             "smtp_starttls": true,
             "smtp_ssl_verify": true,
-            "smtp_from": "huginn@example.org"
+            "smtp_from": "huginn@example.org",
+            "enable_insecure_agents": false,
+            "enable_second_precision_schedule": false,
+            "invitation_code": "s3cr3t-invite",
+            "require_confirmed_email": true,
+            "openai_api_key": "sk-...",
+            "openai_base_url": "https://api.openai.com/v1"
         }
     ],
     "type": "object",
@@ -78,6 +84,36 @@
             "type": "string",
             "title": "Sender address",
             "description": "From address used for outgoing mail. Defaults to huginn@<domain>."
+        },
+        "enable_insecure_agents": {
+            "type": "boolean",
+            "title": "Enable insecure agents",
+            "description": "Unlock the ShellCommandAgent and LocalFileAgent, which can run arbitrary shell commands and read/write local files. Security risk: only enable on a trusted, single-tenant instance."
+        },
+        "enable_second_precision_schedule": {
+            "type": "boolean",
+            "title": "Enable second-precision schedules",
+            "description": "Allow second-level fields in the SchedulerAgent cron expression. By default schedules are limited to minute precision."
+        },
+        "invitation_code": {
+            "type": "string",
+            "title": "Invitation code",
+            "description": "Code required to register a new account. Prevents unwanted self-registration. Leave empty to keep the current code unchanged."
+        },
+        "require_confirmed_email": {
+            "type": "boolean",
+            "title": "Require confirmed email",
+            "description": "New users must confirm their email address before they can log in. Requires a working mail relay."
+        },
+        "openai_api_key": {
+            "type": "string",
+            "title": "OpenAI API key",
+            "description": "Fallback API key for the built-in OpenAI agents (LLM, image, speech, video). Can also be set per-agent. Leave empty to disable the global default."
+        },
+        "openai_base_url": {
+            "type": "string",
+            "title": "OpenAI base URL",
+            "description": "API endpoint for the OpenAI agents. Defaults to https://api.openai.com/v1. Point it at a compatible endpoint (e.g. http://host:11434/v1 for Ollama)."
         }
     }
 }
