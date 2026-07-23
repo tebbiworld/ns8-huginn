@@ -1,0 +1,17 @@
+{
+  "name": "Foundry VTT",
+  "description": {
+    "en": "Foundry Virtual Tabletop — self-hosted web virtual tabletop for tabletop RPGs",
+    "de": "Foundry Virtual Tabletop — selbst gehosteter virtueller Tisch für Pen-&-Paper-Rollenspiele"
+  },
+  "categories": ["media"],
+  "authors": [
+    { "name": "tebbi", "email": "info@ebbinghaus.world" }
+  ],
+  "docs": {
+    "documentation_url": "https://foundryvtt.com/kb/",
+    "bug_url": "https://github.com/tebbiworld/ns8-foundryvtt/issues",
+    "code_url": "https://github.com/tebbiworld/ns8-foundryvtt"
+  },
+  "source": "ghcr.io/tebbiworld/foundryvtt"
+}
