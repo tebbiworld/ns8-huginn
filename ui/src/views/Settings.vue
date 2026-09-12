@@ -52,6 +52,13 @@
               <template slot="text-left">{{ $t("settings.disabled") }}</template>
               <template slot="text-right">{{ $t("settings.enabled") }}</template>
             </cv-toggle>
+            <NsInlineNotification
+              kind="info"
+              :title="$t('settings.proxy_hint_title')"
+              :description="$t('settings.proxy_hint_desc')"
+              :showCloseButton="false"
+              class="proxy-hint"
+            />
             <cv-text-input
               :label="$t('settings.timezone')"
               v-model.trim="timezone"
@@ -521,5 +528,8 @@ export default {
 }
 .feature-warning {
   margin-top: $spacing-05;
+}
+.proxy-hint {
+  margin-top: $spacing-06;
 }
 </style>

@@ -24,6 +24,10 @@ ExecStartPre=/bin/rm -f %t/huginn-app.pid %t/huginn-app.ctr-id
 ExecStartPre=-runagent discover-smarthost
 # Make sure the custom-agents directory exists before it is bind-mounted
 ExecStartPre=/bin/mkdir -p %S/state/custom_agents
+# TZ sets the container/OS time zone (glibc, log timestamps), while Rails and
+# the Huginn scheduler read TIMEZONE only (config/application.rb,
+# lib/huginn_scheduler.rb). Both must carry the same IANA name, otherwise
+# schedules keep firing on Huginn's built-in Pacific default.
 # Wait for MariaDB to pass its health check before starting Huginn, otherwise
 # the entrypoint runs db:migrate against a database that is still initialising
 # on first boot and the foreman process aborts.
@@ -56,6 +60,7 @@ ExecStart=/usr/bin/podman run \
     --env SEED_USERNAME=${SEED_USERNAME} \
     --env SEED_PASSWORD=${SEED_PASSWORD} \
     --env TZ=${TZ} \
+    --env TIMEZONE=${TZ} \
     --volume %S/state/custom_agents:/app/custom_agents:Z \
     --volume %S/huginn-init/bundled-agents:/app/bundled_agents:ro,Z \
     --volume %S/huginn-init/zz_custom_agents.rb:/app/config/initializers/zz_custom_agents.rb:ro,Z \

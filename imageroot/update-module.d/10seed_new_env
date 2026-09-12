@@ -33,6 +33,11 @@ def ensure(key, value):
 
 ensure("INVITATION_CODE", secrets.token_urlsafe(12))
 
+# Since 1.2.1 the app unit also passes the time zone to Rails as TIMEZONE. An
+# empty value would silently fall back to Huginn's built-in Pacific default, so
+# make sure TZ always carries a valid IANA name.
+ensure("TZ", "UTC")
+
 # Make sure these keys always exist so the app unit's ${VAR} references are
 # defined. Defaults keep the safe/off behaviour; empty OpenAI values simply let
 # the agents fall back to their own defaults or per-agent credentials.

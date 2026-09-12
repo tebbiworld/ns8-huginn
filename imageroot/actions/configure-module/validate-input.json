@@ -25,7 +25,9 @@
         }
     ],
     "type": "object",
-    "required": ["host"],
+    "required": [
+        "host"
+    ],
     "properties": {
         "host": {
             "type": "string",
@@ -46,7 +48,7 @@
         "timezone": {
             "type": "string",
             "title": "Timezone",
-            "description": "IANA timezone used by Huginn, like 'Europe/Berlin'."
+            "description": "IANA timezone used by Huginn, like 'Europe/Berlin'. It is passed to the container both as TZ (operating system) and as TIMEZONE (Rails and the Huginn scheduler). An unknown name is rejected."
         },
         "smtp_host": {
             "type": "string",
