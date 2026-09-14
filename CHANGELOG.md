@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.2 — 2026-09-14
+
+### Changed
+
+- Runtime image pinned to the Huginn release `v2026.09.09` instead of the moving `latest` (master) tag: every installation now runs the same version; new releases arrive as module updates (automatic every ~6 weeks).
+
 All notable changes to this module are documented here. Releases before 1.2.1
 are described in the GitHub release notes and the git history.
 

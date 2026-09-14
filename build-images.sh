@@ -18,7 +18,7 @@ reponame="huginn"
 # Pin the application images used at runtime. They are declared in the
 # org.nethserver.images label so the node agent pre-pulls them and exposes
 # their reference as ${MARIADB_IMAGE} and ${HUGINN_IMAGE} to the units.
-huginn_image="ghcr.io/huginn/huginn:latest"
+huginn_image="ghcr.io/huginn/huginn:v2026.09.09"
 mariadb_image="docker.io/library/mariadb:11.4"
 
 # Create a new empty container image
