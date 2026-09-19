@@ -22,6 +22,10 @@ on:
 jobs:
   run:
     name: "Run tests"
+    # Branch builds only: a release tag (1.2.3) publishes the commit that was
+    # already tested on its branch, so testing it again would only burn runner
+    # jobs. Version tags are the only refs with a dot in their name here.
+    if: ${{ github.event_name == 'workflow_dispatch' || !contains(github.event.workflow_run.head_branch, '.') }}
     permissions:
       contents: read
       pull-requests: write
