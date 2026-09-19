@@ -19,6 +19,7 @@
 import os
 import secrets
 import agent
+import modsecrets
 
 envfile = os.path.join(os.environ["AGENT_STATE_DIR"], "environment")
 env = agent.read_envfile(envfile)
@@ -31,7 +32,8 @@ def ensure(key, value):
         agent.set_env(key, value)
 
 
-ensure("INVITATION_CODE", secrets.token_urlsafe(12))
+# secrets live in state/passwords.env (05migrate_secrets ran before this step)
+modsecrets.ensure({"INVITATION_CODE": secrets.token_urlsafe(12)})
 
 # Since 1.2.1 the app unit also passes the time zone to Rails as TIMEZONE. An
 # empty value would silently fall back to Huginn's built-in Pacific default, so
@@ -45,7 +47,6 @@ for key, default in (
     ("ENABLE_INSECURE_AGENTS", "false"),
     ("ENABLE_SECOND_PRECISION_SCHEDULE", "false"),
     ("REQUIRE_CONFIRMED_EMAIL", "false"),
-    ("OPENAI_API_KEY", ""),
     ("OPENAI_BASE_URL", ""),
 ):
     if key not in env:

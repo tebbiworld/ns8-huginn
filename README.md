@@ -87,6 +87,18 @@ api-cli run module/huginn1/configure-module --data '{
 }'
 ```
 
+## Backup, restore and secrets
+
+Before each backup run the module writes a consistent MariaDB dump
+(`state/huginn.sql`). The NS8 module backup contains this dump, the uploaded
+custom agents and `state/passwords.env`. On restore the module rebuilds the
+database from the dump and re-applies all settings.
+
+Passwords, tokens and keys (database, Rails secret token, initial admin
+password, invitation code, OpenAI key, SMTP password) are stored in
+`state/passwords.env`, mode 0600, and not in the module environment, which NS8
+mirrors to Redis.
+
 ## Build
 
 ```bash

@@ -8,6 +8,7 @@
 import sys
 import json
 import agent
+import modsecrets
 
 data = json.load(sys.stdin)
 
@@ -16,6 +17,9 @@ h2hs = data.get("http2https", True)
 
 agent.set_env("TRAEFIK_HOST", host)
 agent.set_env("TRAEFIK_HTTP2HTTPS", h2hs)
+if "lets_encrypt" in data:
+    # kept so restore-module can re-create the route with the same setting
+    agent.set_env("TRAEFIK_LETS_ENCRYPT", data["lets_encrypt"])
 
 # Optional timezone override for Huginn
 if data.get("timezone"):
@@ -34,9 +38,11 @@ agent.set_env("ENABLE_SECOND_PRECISION_SCHEDULE",
 # Registration: the invitation code required to sign up. Only overwrite it when a
 # non-empty value is supplied, so clearing the field in the UI keeps the current
 # code instead of accidentally falling back to an empty/guessable one.
+# Secrets (invitation code, API key, SMTP password) go to state/passwords.env.
+new_secrets = {}
 invitation_code = (data.get("invitation_code") or "").strip()
 if invitation_code:
-    agent.set_env("INVITATION_CODE", invitation_code)
+    new_secrets["INVITATION_CODE"] = invitation_code
 
 # Require users to confirm their e-mail address before they can log in. Needs a
 # working mail relay (cluster smarthost or manual SMTP above).
@@ -44,7 +50,7 @@ agent.set_env("REQUIRE_CONFIRMED_EMAIL",
               "true" if data.get("require_confirmed_email", False) else "false")
 
 # Global fallback credentials for the built-in OpenAI agents.
-agent.set_env("OPENAI_API_KEY", data.get("openai_api_key") or "")
+new_secrets["OPENAI_API_KEY"] = data.get("openai_api_key") or ""
 agent.set_env("OPENAI_BASE_URL", (data.get("openai_base_url") or "").strip())
 
 # Optional manual SMTP relay. These values are only used by discover-smarthost
@@ -54,7 +60,7 @@ smtp_host = (data.get("smtp_host") or "").strip()
 agent.set_env("SMTP_MANUAL_HOST", smtp_host)
 agent.set_env("SMTP_MANUAL_PORT", str(data.get("smtp_port") or 587))
 agent.set_env("SMTP_MANUAL_USERNAME", data.get("smtp_username") or "")
-agent.set_env("SMTP_MANUAL_PASSWORD", data.get("smtp_password") or "")
+new_secrets["SMTP_MANUAL_PASSWORD"] = data.get("smtp_password") or ""
 agent.set_env("SMTP_MANUAL_STARTTLS", "true" if data.get("smtp_starttls", True) else "false")
 agent.set_env("SMTP_MANUAL_FROM", data.get("smtp_from") or "")
 # Verify the relay's TLS certificate. Applies to both the manual relay and the
@@ -63,4 +69,4 @@ agent.set_env("SMTP_MANUAL_FROM", data.get("smtp_from") or "")
 agent.set_env("SMTP_MANUAL_SSL_VERIFY", "true" if data.get("smtp_ssl_verify", True) else "false")
 
 # Persist environment so the systemd units pick up the new values
-agent.dump_env()
+modsecrets.write(new_secrets)

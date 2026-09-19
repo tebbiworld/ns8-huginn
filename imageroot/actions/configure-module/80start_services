@@ -17,4 +17,5 @@ runagent discover-smarthost || true
 
 # Enable and (re)start the pod so configuration changes are applied
 systemctl --user enable huginn.service
-systemctl --user restart huginn.service
+# List every unit: restarting only the pod does not reliably cycle its children.
+systemctl --user restart huginn.service huginn-db.service huginn-app.service

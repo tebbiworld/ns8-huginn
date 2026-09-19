@@ -1,0 +1,44 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 tebbi
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# Re-apply the restored settings: every field configure-module accepts is
+# passed, the secrets are read back from the restored passwords.env.
+
+import os
+
+import agent
+import modsecrets
+
+env = os.environ
+pw = modsecrets.read()
+
+
+def flag(name, default):
+    return env.get(name, default).lower() == "true"
+
+
+data = {
+    "host": env["TRAEFIK_HOST"],
+    "http2https": flag("TRAEFIK_HTTP2HTTPS", "True"),
+    "lets_encrypt": flag("TRAEFIK_LETS_ENCRYPT", "False"),
+    "timezone": env.get("TZ", "UTC"),
+    "smtp_host": env.get("SMTP_MANUAL_HOST", ""),
+    "smtp_port": int(env.get("SMTP_MANUAL_PORT", "587") or 587),
+    "smtp_username": env.get("SMTP_MANUAL_USERNAME", ""),
+    "smtp_password": pw.get("SMTP_MANUAL_PASSWORD", ""),
+    "smtp_starttls": flag("SMTP_MANUAL_STARTTLS", "true"),
+    "smtp_ssl_verify": flag("SMTP_MANUAL_SSL_VERIFY", "true"),
+    "smtp_from": env.get("SMTP_MANUAL_FROM", ""),
+    "enable_insecure_agents": flag("ENABLE_INSECURE_AGENTS", "false"),
+    "enable_second_precision_schedule": flag("ENABLE_SECOND_PRECISION_SCHEDULE", "false"),
+    "invitation_code": pw.get("INVITATION_CODE", ""),
+    "require_confirmed_email": flag("REQUIRE_CONFIRMED_EMAIL", "false"),
+    "openai_api_key": pw.get("OPENAI_API_KEY", ""),
+    "openai_base_url": env.get("OPENAI_BASE_URL", ""),
+}
+response = agent.tasks.run(agent_id=env["AGENT_ID"], action="configure-module", data=data)
+agent.assert_exp(response["exit_code"] == 0, "The configure-module subtask failed!")

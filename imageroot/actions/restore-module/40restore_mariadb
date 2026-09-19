@@ -1,0 +1,44 @@
+#!/bin/bash
+
+#
+# Copyright (C) 2026 tebbi
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# Rebuild the MariaDB data directory from the restored state/huginn.sql: an
+# ephemeral MariaDB container initialises a fresh database with the restored
+# passwords and loads the dump from its initdb hook.
+
+set -e -o pipefail
+exec 1>&2
+
+if [ ! -s huginn.sql ]; then
+    echo "no huginn.sql in the restored state: skipping database restore"
+    exit 0
+fi
+
+# Export only the database secrets. The file is not sourced: other values in
+# it may contain spaces or shell metacharacters.
+while IFS='=' read -r key value; do
+    case "${key}" in
+        MARIADB_PASSWORD|MARIADB_ROOT_PASSWORD) export "${key}=${value}" ;;
+    esac
+done < ./passwords.env
+
+podman volume rm -f huginn-mysql >/dev/null 2>&1 || true
+rm -rf restore && mkdir -p restore
+cp huginn.sql restore/10-huginn.sql
+cat > restore/zz-stop.sh <<'EOS'
+docker_temp_server_stop
+exit 0
+EOS
+podman run --rm --network=none --replace --name huginn-restore \
+    --volume ./restore:/docker-entrypoint-initdb.d:Z \
+    --volume huginn-mysql:/var/lib/mysql:Z \
+    --env MARIADB_DATABASE=huginn \
+    --env MARIADB_USER=huginn \
+    --env MARIADB_PASSWORD \
+    --env MARIADB_ROOT_PASSWORD \
+    "${MARIADB_IMAGE}"
+rm -rf restore huginn.sql
+echo "database restored from dump"

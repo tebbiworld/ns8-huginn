@@ -6,6 +6,7 @@
 #
 
 set -e
+exec 1>&2
 
 # Refresh the SMTP env file and restart the app container so Huginn picks up
 # the new mail relay settings. Do nothing if the module is not running yet.

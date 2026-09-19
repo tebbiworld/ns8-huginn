@@ -19,4 +19,4 @@ set -e
 exec 1>&2
 
 systemctl --user daemon-reload
-systemctl --user restart huginn.service
+systemctl --user try-restart huginn.service huginn-db.service huginn-app.service

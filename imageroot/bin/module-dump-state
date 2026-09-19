@@ -1,0 +1,15 @@
+#!/bin/bash
+
+#
+# Copyright (C) 2026 tebbi
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# Runs before the backup (CWD = state/): dump the Huginn database.
+
+set -e -o pipefail
+exec 1>&2
+
+podman exec huginn-db sh -c 'mariadb-dump --single-transaction --quick --routines --triggers --default-character-set=utf8mb4 -u root --password="$MARIADB_ROOT_PASSWORD" huginn' > huginn.sql.tmp
+mv huginn.sql.tmp huginn.sql
+echo "Huginn database dumped to state/huginn.sql ($(du -h huginn.sql | cut -f1))"

@@ -15,6 +15,8 @@ After=huginn.service huginn-db.service
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
 EnvironmentFile=%S/state/environment
+# Secrets are kept out of state/environment (mirrored to Redis).
+EnvironmentFile=-%S/state/passwords.env
 EnvironmentFile=-%S/state/smarthost.env
 WorkingDirectory=%S/state
 Restart=always
@@ -45,20 +47,20 @@ ExecStart=/usr/bin/podman run \
     --env DATABASE_ENCODING=utf8mb4 \
     --env DATABASE_NAME=huginn \
     --env DATABASE_USERNAME=huginn \
-    --env DATABASE_PASSWORD=${MARIADB_PASSWORD} \
+    --env DATABASE_PASSWORD \
     --env DO_NOT_CREATE_DATABASE=true \
-    --env APP_SECRET_TOKEN=${APP_SECRET_TOKEN} \
+    --env APP_SECRET_TOKEN \
     --env DOMAIN=${TRAEFIK_HOST} \
     --env RAILS_ENV=production \
     --env FORCE_SSL=false \
     --env ENABLE_INSECURE_AGENTS=${ENABLE_INSECURE_AGENTS} \
     --env ENABLE_SECOND_PRECISION_SCHEDULE=${ENABLE_SECOND_PRECISION_SCHEDULE} \
-    --env INVITATION_CODE=${INVITATION_CODE} \
+    --env INVITATION_CODE \
     --env REQUIRE_CONFIRMED_EMAIL=${REQUIRE_CONFIRMED_EMAIL} \
-    --env OPENAI_API_KEY=${OPENAI_API_KEY} \
+    --env OPENAI_API_KEY \
     --env OPENAI_BASE_URL=${OPENAI_BASE_URL} \
     --env SEED_USERNAME=${SEED_USERNAME} \
-    --env SEED_PASSWORD=${SEED_PASSWORD} \
+    --env SEED_PASSWORD \
     --env TZ=${TZ} \
     --env TIMEZONE=${TZ} \
     --volume %S/state/custom_agents:/app/custom_agents:Z \

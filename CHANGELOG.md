@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.3.0 — 2026-09-19
+
+Alignment with the NethServer module conventions (NethServer/agents skills).
+
+### Changed
+
+- **Secrets moved out of the module environment.** The database passwords, the Rails secret token, the initial admin password, the invitation code, the OpenAI API key and the SMTP password are now kept in `state/passwords.env` (mode 0600) instead of `state/environment`, which NS8 mirrors to Redis in plain text. Existing installations are migrated on update; the values do not change. The secrets are no longer passed on the podman command line, and the generated `smarthost.env` is private too.
+- **Module backup now contains the data.** New `etc/state-include.conf`: the backup holds a consistent MariaDB dump written by `module-dump-state`, the secrets file and the uploaded custom agents. Before, only the module environment was saved.
+- **Working restore.** New `restore-module` steps rebuild the database from the dump and re-apply every setting.
+- MariaDB pinned to `11.4.12` instead of the rolling `11.4` tag.
+- Service restarts list every unit of the pod explicitly.
+
+### Added
+
+- Robot Framework tests (install, update from the previous release, backup and restore) run on real NS8 nodes through `stephdl/ns8-ci-actions`.
+
 ## 1.2.2 — 2026-09-14
 
 ### Changed
