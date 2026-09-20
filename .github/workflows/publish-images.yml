@@ -1,9 +1,9 @@
 name: "Publish images"
 
 # Same behaviour as NethServer/ns8-github-actions publish-branch.yml (build with
-# build-images.sh, push <image>:<branch-or-tag>, and :latest for main), but the
-# registry login uses the GHCR_TOKEN secret: the ghcr package of this module is
-# user-owned and the repository GITHUB_TOKEN is not allowed to write to it.
+# build-images.sh, push <image>:<branch-or-tag>, and :latest for main and release
+# tags), but the registry login uses the GHCR_TOKEN secret: the ghcr package of
+# this module is user-owned and the repository GITHUB_TOKEN may not write to it.
 
 on:
   push:

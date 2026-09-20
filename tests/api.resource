@@ -42,7 +42,7 @@ Back up the module to the cluster repository
     ...    {"name":"ci-repo","provider":"cluster","url":"${url}","password":"","parameters":{}}
     ${repo_id} =    Set Variable    ${repo['id']}
     ${bid} =    Run task    cluster/add-backup
-    ...    {"name":"ci-backup","repository":"${repo_id}","schedule":"daily","schedule_hint":{},"retention":"2d","instances":["${mid}"],"enabled":false}
+    ...    {"name":"ci-backup","repository":"${repo_id}","schedule":"daily","schedule_hint":{},"retention":2,"instances":["${mid}"],"enabled":true}
     Run task    cluster/run-backup    {"id": ${bid}}    decode_json=${FALSE}
     ${env} =    Run on node    runagent -m ${mid} bash -c 'echo "$IMAGE_URL $MODULE_UUID"'
     ${image_url}    ${uuid} =    Evaluate    $env.split()
