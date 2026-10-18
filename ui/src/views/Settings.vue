@@ -358,6 +358,7 @@
               ref="database_pool"
               class="toggle"
             />
+            <div class="bx--label toggle">{{ $t("settings.healthcheck_mode") }}</div>
             <cv-radio-group
               :legend="$t('settings.healthcheck_mode')"
               vertical
