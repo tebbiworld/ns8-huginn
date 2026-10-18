@@ -12,6 +12,7 @@ import os
 import sys
 
 import agent
+import huginnworker
 import modsecrets
 
 env = os.environ
@@ -47,6 +48,8 @@ data = {
     "openai_api_key": pw.get("OPENAI_API_KEY", ""),
     "openai_base_url": env.get("OPENAI_BASE_URL", ""),
 }
+# background workers and health check (defaults for a backup of an older version)
+data.update(huginnworker.current())
 if "TRAEFIK_LETS_ENCRYPT" not in env:
     # A backup taken with a module version that did not record the setting: say
     # so instead of silently asserting "off". The route is created without a

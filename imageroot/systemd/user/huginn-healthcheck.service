@@ -1,0 +1,17 @@
+#
+# Copyright (C) 2026 tebbi
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# Restart a Huginn background worker that stopped processing jobs (see
+# bin/huginn-healthcheck). Started by huginn-healthcheck.timer.
+
+[Unit]
+Description=Huginn background worker health check
+
+[Service]
+Type=oneshot
+EnvironmentFile=%S/state/environment
+WorkingDirectory=%S/state
+ExecStart=/usr/local/bin/runagent huginn-healthcheck
+SyslogIdentifier=%u

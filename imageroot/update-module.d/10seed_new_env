@@ -19,6 +19,7 @@
 import os
 import secrets
 import agent
+import huginnworker
 import modsecrets
 
 envfile = os.path.join(os.environ["AGENT_STATE_DIR"], "environment")
@@ -51,3 +52,10 @@ for key, default in (
 ):
     if key not in env:
         agent.set_env(key, default)
+
+# Since 1.4.0: background worker settings and health check. Missing keys get
+# their defaults, among them DELAYED_JOB_MAX_RUNTIME 15 min instead of Huginn's
+# 2 min, which aborted long agent runs and could leave the worker stuck.
+huginnworker.apply({})
+huginnworker.write_procfile(os.path.join(os.environ["AGENT_STATE_DIR"], "Procfile"),
+                            huginnworker.current()["delayed_job_workers"])

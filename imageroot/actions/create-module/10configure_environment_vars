@@ -13,6 +13,7 @@
 
 import sys
 import agent
+import huginnworker
 
 # Initial Huginn admin account, seeded on first start.
 agent.set_env("SEED_USERNAME", "admin")
@@ -54,3 +55,7 @@ except Exception:
     cluster_smarthost = False
 
 agent.set_env("SMTP_MANUAL_SSL_VERIFY", "false" if cluster_smarthost else "true")
+
+# Background worker defaults and the Procfile (pypkg/huginnworker.py)
+huginnworker.apply({})
+huginnworker.write_procfile("Procfile", huginnworker.current()["delayed_job_workers"])

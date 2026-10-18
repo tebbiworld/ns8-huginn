@@ -20,3 +20,7 @@ exec 1>&2
 
 systemctl --user daemon-reload
 systemctl --user try-restart huginn.service huginn-db.service huginn-app.service
+# since 1.4.0: background worker health check, for instances already configured
+if systemctl --user -q is-enabled huginn.service; then
+    systemctl --user enable --now huginn-healthcheck.timer
+fi

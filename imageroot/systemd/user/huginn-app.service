@@ -26,6 +26,8 @@ ExecStartPre=/bin/rm -f %t/huginn-app.pid %t/huginn-app.ctr-id
 ExecStartPre=-runagent discover-smarthost
 # Make sure the custom-agents directory exists before it is bind-mounted
 ExecStartPre=/bin/mkdir -p %S/state/custom_agents
+# Procfile with the configured number of Delayed Job workers (configure-module)
+ExecStartPre=/usr/local/bin/runagent write-procfile
 # TZ sets the container/OS time zone (glibc, log timestamps), while Rails and
 # the Huginn scheduler read TIMEZONE only (config/application.rb,
 # lib/huginn_scheduler.rb). Both must carry the same IANA name, otherwise
@@ -61,9 +63,13 @@ ExecStart=/usr/bin/podman run \
     --env OPENAI_BASE_URL=${OPENAI_BASE_URL} \
     --env SEED_USERNAME=${SEED_USERNAME} \
     --env SEED_PASSWORD \
+    --env DELAYED_JOB_MAX_RUNTIME=${DELAYED_JOB_MAX_RUNTIME} \
+    --env DELAYED_JOB_SLEEP_DELAY=${DELAYED_JOB_SLEEP_DELAY} \
+    --env DATABASE_POOL=${DATABASE_POOL} \
     --env TZ=${TZ} \
     --env TIMEZONE=${TZ} \
     --volume %S/state/custom_agents:/app/custom_agents:Z \
+    --volume %S/state/Procfile:/app/Procfile:ro,Z \
     --volume %S/huginn-init/bundled-agents:/app/bundled_agents:ro,Z \
     --volume %S/huginn-init/zz_custom_agents.rb:/app/config/initializers/zz_custom_agents.rb:ro,Z \
     ${HUGINN_IMAGE}

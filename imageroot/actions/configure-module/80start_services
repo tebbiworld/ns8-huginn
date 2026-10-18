@@ -19,3 +19,5 @@ runagent discover-smarthost || true
 systemctl --user enable huginn.service
 # List every unit: restarting only the pod does not reliably cycle its children.
 systemctl --user restart huginn.service huginn-db.service huginn-app.service
+# background worker health check (bin/huginn-healthcheck; does nothing when off)
+systemctl --user enable --now huginn-healthcheck.timer

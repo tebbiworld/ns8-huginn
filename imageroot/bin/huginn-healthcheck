@@ -1,0 +1,111 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 tebbi
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# huginn-healthcheck.service (timer, every 5 minutes, through runagent):
+# detect a background worker that stopped processing jobs and restart it.
+#   HEALTHCHECK_MODE     off | restart | quiet
+#       restart  restart the app; the backlog is processed afterwards
+#       quiet    drop the backlog and move the mail agents past the events of
+#                the outage first, so no stale alarms are sent
+#   HEALTHCHECK_MINUTES  jobs due longer than this count as backlog
+#   HEALTHCHECK_BACKLOG  restart from this many overdue jobs (or a stale lock)
+#   HEALTHCHECK_MAIL_TO  optional: mail a report through the cluster smarthost
+# The result is kept in state/healthcheck.json for the settings page.
+
+import datetime
+import os
+import socket
+import subprocess
+import sys
+
+import agent
+import huginnhealth
+import huginnworker
+
+now = datetime.datetime.now(datetime.timezone.utc)
+cfg = huginnworker.current()
+state = huginnhealth.load_state()
+state["last_check"] = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+state["mode"] = cfg["healthcheck_mode"]
+
+started = huginnhealth.app_started_at()
+if started is None:
+    # stopped or restarting: systemd takes care of it
+    state["status"] = "app_not_running"
+    huginnhealth.save_state(state)
+    sys.exit(0)
+
+try:
+    m = huginnhealth.measure(cfg["healthcheck_minutes"], cfg["delayed_job_max_runtime"])
+except Exception as exc:
+    print(agent.SD_WARNING + f"health check: cannot read the database: {exc}", file=sys.stderr)
+    state["status"] = "db_unreachable"
+    huginnhealth.save_state(state)
+    sys.exit(0)
+
+state.update({k: m[k] for k in ("backlog", "oldest_minutes", "stale_locks", "failed_jobs", "queued_jobs")})
+hung = m["backlog"] >= cfg["healthcheck_backlog"] or m["stale_locks"] > 0
+uptime_min = (now - started).total_seconds() / 60
+if not hung:
+    state["status"] = "ok"
+elif uptime_min < cfg["healthcheck_minutes"]:
+    # just (re)started: give the worker time to catch up before judging it
+    state["status"] = "catching_up"
+elif cfg["healthcheck_mode"] == "off":
+    state["status"] = "hung"
+    print(agent.SD_WARNING + f"health check: worker looks stuck ({m['backlog']} jobs overdue for up to "
+          f"{m['oldest_minutes']} min, {m['stale_locks']} stale locks); automatic restart is off", file=sys.stderr)
+else:
+    reason = f"{m['backlog']} jobs overdue for up to {m['oldest_minutes']} min, {m['stale_locks']} stale locks"
+    print(agent.SD_WARNING + f"health check: worker stuck ({reason}), restarting ({cfg['healthcheck_mode']})", file=sys.stderr)
+    if cfg["healthcheck_mode"] == "quiet":
+        huginnhealth.discard_backlog()
+    subprocess.run(["systemctl", "--user", "restart", "huginn-app.service"], check=False)
+    state["status"] = "restarted"
+    state["last_restart"] = {"time": state["last_check"], "mode": cfg["healthcheck_mode"], "reason": reason}
+    mail_to = cfg["healthcheck_mail_to"]
+    if mail_to:
+        try:
+            import email.message
+            import smtplib
+            import ssl
+            sh = agent.get_smarthost_settings(agent.redis_connect(use_replica=True))
+            if not sh.get("enabled"):
+                raise RuntimeError("no cluster smarthost configured")
+            host = os.environ.get("TRAEFIK_HOST") or socket.getfqdn()
+            msg = email.message.EmailMessage()
+            msg["Subject"] = f"Huginn {host}: background worker restarted"
+            msg["From"] = f"huginn@{host.split('.', 1)[-1] if '.' in host else host}"
+            msg["To"] = mail_to
+            msg.set_content(
+                f"The Huginn background worker of {os.environ.get('MODULE_ID')} ({host}) stopped processing jobs "
+                f"and was restarted at {state['last_check']}.\n\nReason: {reason}\nMode: {cfg['healthcheck_mode']}"
+                + ("\nQueued jobs were dropped and the mail agents skip the events of the outage." if cfg["healthcheck_mode"] == "quiet"
+                   else "\nThe backlog is processed now; alarms of the outage may follow.")
+                + "\n\nDetails: journal of the module (huginn-healthcheck, huginn-app).\n")
+            context = ssl.create_default_context()
+            if not sh.get("tls_verify", True):
+                context.check_hostname = False
+                context.verify_mode = ssl.CERT_NONE
+            port = int(sh.get("port") or 587)
+            if sh.get("encrypt_smtp") == "tls":
+                smtp = smtplib.SMTP_SSL(sh["host"], port, timeout=30, context=context)
+            else:
+                smtp = smtplib.SMTP(sh["host"], port, timeout=30)
+                if sh.get("encrypt_smtp") == "starttls":
+                    smtp.starttls(context=context)
+            with smtp:
+                if sh.get("username"):
+                    smtp.login(sh["username"], sh.get("password") or "")
+                smtp.send_message(msg)
+            state["last_restart"]["mail"] = "sent"
+        except Exception as exc:
+            # never print the exception text of smtplib: it may echo addresses
+            print(agent.SD_WARNING + f"health check: report mail not sent ({type(exc).__name__})", file=sys.stderr)
+            state["last_restart"]["mail"] = "failed"
+
+huginnhealth.save_state(state)
