@@ -1,10 +1,32 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- **Health check for the background worker.** A timer checks the job table every 5 minutes. A worker that stopped processing jobs (overdue backlog or a stale job lock) is restarted: `restart` processes the backlog afterwards, `quiet` drops the queued jobs and lets the mail agents skip the events of the outage, so no stale alarms are sent; `off` only warns. Optional report mail through the cluster smarthost. The settings page shows backlog, failed jobs, the last restart and scheduled agents that have not run for more than a day.
+- **Worker settings:** maximum job runtime, number of background workers (1-5), worker poll interval and database connections per process.
+- **Readable agent export in the backup:** before each backup every user's agents are written as scenario JSON to `state/agents-export/agents.json`, besides the database dump.
+
+### Changed
+
+- **Maximum job runtime 15 minutes** instead of Huginn's 2 minutes, also for existing installations (set with the update, adjustable). Long fetches were aborted at 2 minutes, and an abort inside a database query could leave the worker stuck until the next restart.
+
+### Security
+
+- **The settings page no longer receives secrets.** `get-configuration` returned the SMTP password, invitation code, OpenAI API key and the initial admin password in plain text (task results are kept in Redis). It now only says whether each is stored; an empty field keeps the stored value, the OpenAI key can be removed explicitly, and the initial admin password is shown only on request.
+
 ## 1.3.2 — 2026-10-18
 
 ### Fixed
 
 - **Module logo in the Software Center.** The UI shipped no `logo.png`, so installed instances showed the NS8 default logo; it now carries the official Huginn logo (as in the catalog).
+
+## 1.3.1 — 2026-09-23
+
+### Changed
+
+- CI only: registry cleanup uses the token that exists; QEMU tests as a workflow of their own. No change to the module.
 
 ## 1.3.0 — 2026-09-19
 
