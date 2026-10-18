@@ -10,7 +10,6 @@
 # import) - a readable copy of the agent configuration besides the dump.
 
 set -e -o pipefail
-umask 077  # the export holds agent options like the dump
 exec 1>&2
 
 podman exec huginn-db sh -c 'mariadb-dump --single-transaction --quick --routines --triggers --default-character-set=utf8mb4 -u root --password="$MARIADB_ROOT_PASSWORD" huginn' > huginn.sql.tmp
@@ -21,7 +20,11 @@ echo "Huginn database dumped to state/huginn.sql ($(du -h huginn.sql | cut -f1))
 # must not stop the backup, the database dump is the authoritative copy.
 # Rails logs to stdout too: the script writes the JSON to a file in the
 # container, which is copied out afterwards.
-export_agents() {
+# A subshell with a private umask: the export holds the agent options. The
+# dump keeps the default mode, restore-module hands it to the MariaDB
+# container, which reads it as another user.
+export_agents() (
+    umask 077
     podman exec -i huginn-app sh -c 'cd /app && exec bundle exec rails runner -' >/dev/null <<'RUBY' || return 1
 out = User.order(:id).map do |user|
   scenarios = user.scenarios.order(:id).map do |s|
@@ -38,7 +41,7 @@ RUBY
     podman exec huginn-app sh -c 'cat /app/tmp/agents-export.json && rm -f /app/tmp/agents-export.json' > agents-export/agents.json.tmp || return 1
     python3 -c 'import json,sys; json.load(open(sys.argv[1]))' agents-export/agents.json.tmp || return 1
     mv agents-export/agents.json.tmp agents-export/agents.json
-}
+)
 
 mkdir -p agents-export
 if export_agents 2>agents-export/.error; then
