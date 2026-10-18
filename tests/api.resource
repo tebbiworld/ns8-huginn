@@ -63,3 +63,10 @@ Restore the module from the cluster repository
     END
     ${out} =    Evaluate    json.loads(r'''${stdout}''')    modules=json
     RETURN    ${out['module_id']}
+
+Secret hash
+    [Documentation]    sha256 of one value of state/passwords.env, to compare
+    ...                secrets without printing them.
+    [Arguments]    ${mid}    ${key}
+    ${h} =    Run on node    runagent -m ${mid} bash -c 'grep "^${key}=" "$AGENT_STATE_DIR/passwords.env" | cut -d= -f2- | sha256sum | cut -c1-16'
+    RETURN    ${h.strip()}

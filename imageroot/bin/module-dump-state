@@ -5,7 +5,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
-# Runs before the backup (CWD = state/): dump the Huginn database.
+# Runs before the backup (CWD = state/): dump the Huginn database, and export
+# every user's agents as scenario JSON (the format of Huginn's own export and
+# import) - a readable copy of the agent configuration besides the dump.
 
 set -e -o pipefail
 exec 1>&2
@@ -13,3 +15,39 @@ exec 1>&2
 podman exec huginn-db sh -c 'mariadb-dump --single-transaction --quick --routines --triggers --default-character-set=utf8mb4 -u root --password="$MARIADB_ROOT_PASSWORD" huginn' > huginn.sql.tmp
 mv huginn.sql.tmp huginn.sql
 echo "Huginn database dumped to state/huginn.sql ($(du -h huginn.sql | cut -f1))"
+
+# The export needs the running app (Rails boot, about a minute); a failure
+# must not stop the backup, the database dump is the authoritative copy.
+# Rails logs to stdout too: the script writes the JSON to a file in the
+# container, which is copied out afterwards.
+# A subshell with a private umask: the export holds the agent options. The
+# dump keeps the default mode, restore-module hands it to the MariaDB
+# container, which reads it as another user.
+export_agents() (
+    umask 077
+    podman exec -i huginn-app sh -c 'cd /app && exec bundle exec rails runner -' >/dev/null <<'RUBY' || return 1
+out = User.order(:id).map do |user|
+  scenarios = user.scenarios.order(:id).map do |s|
+    AgentsExporter.new(name: s.name, description: s.description, guid: s.guid,
+                       tag_fg_color: s.tag_fg_color, tag_bg_color: s.tag_bg_color,
+                       icon: s.icon, source_url: false, agents: s.agents).as_json
+  end
+  loose = user.agents.where.not(id: ScenarioMembership.select(:agent_id))
+  scenarios << AgentsExporter.new(name: "Agents without scenario", agents: loose).as_json if loose.exists?
+  { username: user.username, scenarios: scenarios }
+end
+File.write("/app/tmp/agents-export.json", JSON.pretty_generate(exported_at: Time.now.utc.iso8601, users: out))
+RUBY
+    podman exec huginn-app sh -c 'cat /app/tmp/agents-export.json && rm -f /app/tmp/agents-export.json' > agents-export/agents.json.tmp || return 1
+    python3 -c 'import json,sys; json.load(open(sys.argv[1]))' agents-export/agents.json.tmp || return 1
+    mv agents-export/agents.json.tmp agents-export/agents.json
+)
+
+mkdir -p agents-export
+if export_agents 2>agents-export/.error; then
+    rm -f agents-export/.error
+    echo "Agents exported to state/agents-export/agents.json ($(du -h agents-export/agents.json | cut -f1))"
+else
+    rm -f agents-export/agents.json.tmp
+    echo "WARNING: agent export failed (see state/agents-export/.error); the database dump is complete" >&2
+fi

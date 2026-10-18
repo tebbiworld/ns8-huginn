@@ -5,24 +5,95 @@
     "description": "Get huginn configuration",
     "type": "object",
     "properties": {
-        "host": { "type": "string" },
-        "http2https": { "type": "boolean" },
-        "lets_encrypt": { "type": "boolean" },
-        "timezone": { "type": "string" },
-        "smtp_host": { "type": "string" },
-        "smtp_port": { "type": "integer" },
-        "smtp_username": { "type": "string" },
-        "smtp_password": { "type": "string" },
-        "smtp_starttls": { "type": "boolean" },
-        "smtp_ssl_verify": { "type": "boolean" },
-        "smtp_from": { "type": "string" },
-        "enable_insecure_agents": { "type": "boolean" },
-        "enable_second_precision_schedule": { "type": "boolean" },
-        "invitation_code": { "type": "string" },
-        "require_confirmed_email": { "type": "boolean" },
-        "openai_api_key": { "type": "string" },
-        "openai_base_url": { "type": "string" },
-        "admin_username": { "type": "string" },
-        "admin_password": { "type": "string" }
+        "host": {
+            "type": "string"
+        },
+        "http2https": {
+            "type": "boolean"
+        },
+        "lets_encrypt": {
+            "type": "boolean"
+        },
+        "timezone": {
+            "type": "string"
+        },
+        "smtp_host": {
+            "type": "string"
+        },
+        "smtp_port": {
+            "type": "integer"
+        },
+        "smtp_username": {
+            "type": "string"
+        },
+        "smtp_starttls": {
+            "type": "boolean"
+        },
+        "smtp_ssl_verify": {
+            "type": "boolean"
+        },
+        "smtp_from": {
+            "type": "string"
+        },
+        "enable_insecure_agents": {
+            "type": "boolean"
+        },
+        "enable_second_precision_schedule": {
+            "type": "boolean"
+        },
+        "require_confirmed_email": {
+            "type": "boolean"
+        },
+        "openai_base_url": {
+            "type": "string"
+        },
+        "admin_username": {
+            "type": "string"
+        },
+        "smtp_password_set": {
+            "type": "boolean"
+        },
+        "invitation_code_set": {
+            "type": "boolean"
+        },
+        "openai_api_key_set": {
+            "type": "boolean"
+        },
+        "admin_password_set": {
+            "type": "boolean"
+        },
+        "delayed_job_max_runtime": {
+            "type": "integer"
+        },
+        "delayed_job_sleep_delay": {
+            "type": "integer"
+        },
+        "database_pool": {
+            "type": "integer"
+        },
+        "delayed_job_workers": {
+            "type": "integer"
+        },
+        "healthcheck_minutes": {
+            "type": "integer"
+        },
+        "healthcheck_backlog": {
+            "type": "integer"
+        },
+        "healthcheck_mode": {
+            "type": "string",
+            "enum": [
+                "off",
+                "restart",
+                "quiet"
+            ]
+        },
+        "healthcheck_mail_to": {
+            "type": "string"
+        },
+        "health": {
+            "type": "object",
+            "description": "Background worker state: backlog, oldest_minutes, stale_locks, failed_jobs, queued_jobs, stale_agents, last_check, status, last_restart."
+        }
     }
 }

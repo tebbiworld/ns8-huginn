@@ -8,6 +8,7 @@
 import sys
 import json
 import agent
+import huginnworker
 import modsecrets
 
 data = json.load(sys.stdin)
@@ -49,8 +50,13 @@ if invitation_code:
 agent.set_env("REQUIRE_CONFIRMED_EMAIL",
               "true" if data.get("require_confirmed_email", False) else "false")
 
-# Global fallback credentials for the built-in OpenAI agents.
-new_secrets["OPENAI_API_KEY"] = data.get("openai_api_key") or ""
+# Global fallback credentials for the built-in OpenAI agents. The settings page
+# never receives the stored key: an empty field keeps it, openai_api_key_remove
+# deletes it.
+if data.get("openai_api_key"):
+    new_secrets["OPENAI_API_KEY"] = data["openai_api_key"]
+elif data.get("openai_api_key_remove"):
+    new_secrets["OPENAI_API_KEY"] = ""
 agent.set_env("OPENAI_BASE_URL", (data.get("openai_base_url") or "").strip())
 
 # Optional manual SMTP relay. These values are only used by discover-smarthost
@@ -60,13 +66,23 @@ smtp_host = (data.get("smtp_host") or "").strip()
 agent.set_env("SMTP_MANUAL_HOST", smtp_host)
 agent.set_env("SMTP_MANUAL_PORT", str(data.get("smtp_port") or 587))
 agent.set_env("SMTP_MANUAL_USERNAME", data.get("smtp_username") or "")
-new_secrets["SMTP_MANUAL_PASSWORD"] = data.get("smtp_password") or ""
+# an empty password keeps the stored one; no manual relay = no password
+if not smtp_host:
+    new_secrets["SMTP_MANUAL_PASSWORD"] = ""
+elif data.get("smtp_password"):
+    new_secrets["SMTP_MANUAL_PASSWORD"] = data["smtp_password"]
 agent.set_env("SMTP_MANUAL_STARTTLS", "true" if data.get("smtp_starttls", True) else "false")
 agent.set_env("SMTP_MANUAL_FROM", data.get("smtp_from") or "")
 # Verify the relay's TLS certificate. Applies to both the manual relay and the
 # cluster smarthost fallback (see discover-smarthost). Disable it for internal
 # relays that present a certificate not valid for their address.
 agent.set_env("SMTP_MANUAL_SSL_VERIFY", "true" if data.get("smtp_ssl_verify", True) else "false")
+
+# Background workers: Delayed Job limits, database pool, number of workers and
+# the health check (pypkg/huginnworker.py). The Procfile is bind-mounted into
+# the container; 80start_services restarts the pod.
+huginnworker.apply(data)
+huginnworker.write_procfile("Procfile", huginnworker.current()["delayed_job_workers"])
 
 # Persist environment so the systemd units pick up the new values
 modsecrets.write(new_secrets)

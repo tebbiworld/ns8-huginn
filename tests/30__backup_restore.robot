@@ -23,7 +23,13 @@ The restored instance has data, settings and secrets
     ${orig} =    Run task    module/${module_id}/get-configuration    {}
     ${cfg} =    Run task    module/${restored_id}/get-configuration    {}
     Should Be Equal    ${cfg['smtp_host']}    ${orig['smtp_host']}
-    Should Be Equal    ${cfg['smtp_password']}    ${orig['smtp_password']}
-    Should Be Equal    ${cfg['admin_password']}    ${orig['admin_password']}
-    Should Be Equal    ${cfg['invitation_code']}    ${orig['invitation_code']}
+    Should Be Equal As Integers    ${cfg['delayed_job_workers']}    ${orig['delayed_job_workers']}
+    FOR    ${key}    IN    SMTP_MANUAL_PASSWORD    SEED_PASSWORD    INVITATION_CODE
+        ${a} =    Secret hash    ${module_id}    ${key}
+        ${b} =    Secret hash    ${restored_id}    ${key}
+        Should Be Equal    ${a}    ${b}
+    END
+    # the readable agent export travels with the backup
+    ${n} =    Run on node    runagent -m ${restored_id} bash -c 'grep -c "\"schema_version\"" "$AGENT_STATE_DIR/agents-export/agents.json" || true'
+    Should Be True    ${n.strip()} >= 1
     Secrets are kept out of the module environment    ${restored_id}

@@ -9,6 +9,8 @@ import os
 import sys
 import json
 import agent
+import huginnhealth
+import huginnworker
 import modsecrets
 
 _secrets = modsecrets.read()
@@ -26,7 +28,8 @@ config["lets_encrypt"] = route.get("lets_encrypt", False)
 config["smtp_host"] = os.getenv("SMTP_MANUAL_HOST", "")
 config["smtp_port"] = int(os.getenv("SMTP_MANUAL_PORT", "587") or 587)
 config["smtp_username"] = os.getenv("SMTP_MANUAL_USERNAME", "")
-config["smtp_password"] = _secrets.get("SMTP_MANUAL_PASSWORD", "")
+# secrets are never returned: only whether one is stored
+config["smtp_password_set"] = bool(_secrets.get("SMTP_MANUAL_PASSWORD"))
 config["smtp_starttls"] = os.getenv("SMTP_MANUAL_STARTTLS", "true") == "true"
 config["smtp_ssl_verify"] = os.getenv("SMTP_MANUAL_SSL_VERIFY", "true") == "true"
 config["smtp_from"] = os.getenv("SMTP_MANUAL_FROM", "")
@@ -36,14 +39,26 @@ config["enable_insecure_agents"] = os.getenv("ENABLE_INSECURE_AGENTS", "false") 
 config["enable_second_precision_schedule"] = os.getenv("ENABLE_SECOND_PRECISION_SCHEDULE", "false") == "true"
 
 # Registration and OpenAI defaults.
-config["invitation_code"] = _secrets.get("INVITATION_CODE", "")
+config["invitation_code_set"] = bool(_secrets.get("INVITATION_CODE"))
 config["require_confirmed_email"] = os.getenv("REQUIRE_CONFIRMED_EMAIL", "false") == "true"
-config["openai_api_key"] = _secrets.get("OPENAI_API_KEY", "")
+config["openai_api_key_set"] = bool(_secrets.get("OPENAI_API_KEY"))
 config["openai_base_url"] = os.getenv("OPENAI_BASE_URL", "")
 
 # Initial admin credentials seeded on first start (the password is only valid
-# until the administrator changes it inside Huginn).
+# until the administrator changes it inside Huginn); the action
+# get-admin-password returns it on request.
 config["admin_username"] = os.getenv("SEED_USERNAME", "admin")
-config["admin_password"] = _secrets.get("SEED_PASSWORD", "")
+config["admin_password_set"] = bool(_secrets.get("SEED_PASSWORD"))
+
+# Background workers and health check (pypkg/huginnworker.py, huginnhealth.py)
+config.update(huginnworker.current())
+health = huginnhealth.load_state()
+try:
+    if huginnhealth.app_started_at() is not None:
+        health.update(huginnhealth.measure(config["healthcheck_minutes"], config["delayed_job_max_runtime"]))
+        health["live"] = True
+except Exception as exc:
+    print(agent.SD_WARNING + f"cannot read the worker state: {exc}", file=sys.stderr)
+config["health"] = health
 
 json.dump(config, fp=sys.stdout)

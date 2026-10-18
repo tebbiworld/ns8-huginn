@@ -1,0 +1,13 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 tebbi
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# ExecStartPre of huginn-app (through runagent): write state/Procfile with the
+# configured number of Delayed Job workers (see pypkg/huginnworker.py).
+
+import huginnworker
+
+huginnworker.write_procfile("Procfile", huginnworker.current()["delayed_job_workers"])

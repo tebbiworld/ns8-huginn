@@ -70,7 +70,7 @@
         "smtp_password": {
             "type": "string",
             "title": "SMTP password",
-            "description": "Authentication password for the mail relay (optional)."
+            "description": "Authentication password for the mail relay (optional); empty keeps the stored one."
         },
         "smtp_starttls": {
             "type": "boolean",
@@ -110,12 +110,81 @@
         "openai_api_key": {
             "type": "string",
             "title": "OpenAI API key",
-            "description": "Fallback API key for the built-in OpenAI agents (LLM, image, speech, video). Can also be set per-agent. Leave empty to disable the global default."
+            "description": "Global fallback API key for the built-in OpenAI agents; empty keeps the stored key."
         },
         "openai_base_url": {
             "type": "string",
             "title": "OpenAI base URL",
             "description": "API endpoint for the OpenAI agents. Defaults to https://api.openai.com/v1. Point it at a compatible endpoint (e.g. http://host:11434/v1 for Ollama)."
+        },
+        "openai_api_key_remove": {
+            "type": "boolean",
+            "title": "Remove the OpenAI API key",
+            "description": "Delete the stored API key.",
+            "default": false
+        },
+        "delayed_job_max_runtime": {
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 60,
+            "title": "Maximum job runtime (minutes)",
+            "description": "An agent run taking longer is aborted (Huginn DELAYED_JOB_MAX_RUNTIME, upstream default 2).",
+            "default": 15
+        },
+        "delayed_job_sleep_delay": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 60,
+            "title": "Worker poll interval (seconds)",
+            "description": "How long an idle worker sleeps before looking for new jobs (DELAYED_JOB_SLEEP_DELAY).",
+            "default": 10
+        },
+        "database_pool": {
+            "type": "integer",
+            "minimum": 5,
+            "maximum": 100,
+            "title": "Database connections per process",
+            "description": "ActiveRecord connection pool (DATABASE_POOL).",
+            "default": 20
+        },
+        "delayed_job_workers": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "title": "Background workers",
+            "description": "Delayed Job workers running agents in parallel; each needs about 300 MB RAM.",
+            "default": 1
+        },
+        "healthcheck_mode": {
+            "type": "string",
+            "enum": [
+                "off",
+                "restart",
+                "quiet"
+            ],
+            "title": "Automatic worker restart",
+            "description": "off; restart (the backlog is processed afterwards); quiet (drop the backlog and let the mail agents skip the events of the outage, no stale alarms).",
+            "default": "restart"
+        },
+        "healthcheck_minutes": {
+            "type": "integer",
+            "minimum": 10,
+            "maximum": 1440,
+            "title": "Overdue after (minutes)",
+            "default": 30
+        },
+        "healthcheck_backlog": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000,
+            "title": "Restart from overdue jobs",
+            "default": 20
+        },
+        "healthcheck_mail_to": {
+            "type": "string",
+            "maxLength": 254,
+            "title": "Report mail",
+            "description": "Optional address that gets a mail through the cluster smarthost after an automatic restart."
         }
     }
 }
