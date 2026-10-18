@@ -19,8 +19,10 @@ echo "Huginn database dumped to state/huginn.sql ($(du -h huginn.sql | cut -f1))
 
 # The export needs the running app (Rails boot, about a minute); a failure
 # must not stop the backup, the database dump is the authoritative copy.
-mkdir -p agents-export
-if podman exec -i huginn-app sh -c 'cd /app && exec bundle exec rails runner -' > agents-export/agents.json.tmp 2>agents-export/.error <<'RUBY'
+# Rails logs to stdout too: the script writes the JSON to a file in the
+# container, which is copied out afterwards.
+export_agents() {
+    podman exec -i huginn-app sh -c 'cd /app && exec bundle exec rails runner -' >/dev/null <<'RUBY' || return 1
 out = User.order(:id).map do |user|
   scenarios = user.scenarios.order(:id).map do |s|
     AgentsExporter.new(name: s.name, description: s.description, guid: s.guid,
@@ -31,10 +33,15 @@ out = User.order(:id).map do |user|
   scenarios << AgentsExporter.new(name: "Agents without scenario", agents: loose).as_json if loose.exists?
   { username: user.username, scenarios: scenarios }
 end
-puts JSON.pretty_generate(exported_at: Time.now.utc.iso8601, users: out)
+File.write("/app/tmp/agents-export.json", JSON.pretty_generate(exported_at: Time.now.utc.iso8601, users: out))
 RUBY
-then
+    podman exec huginn-app sh -c 'cat /app/tmp/agents-export.json && rm -f /app/tmp/agents-export.json' > agents-export/agents.json.tmp || return 1
+    python3 -c 'import json,sys; json.load(open(sys.argv[1]))' agents-export/agents.json.tmp || return 1
     mv agents-export/agents.json.tmp agents-export/agents.json
+}
+
+mkdir -p agents-export
+if export_agents 2>agents-export/.error; then
     rm -f agents-export/.error
     echo "Agents exported to state/agents-export/agents.json ($(du -h agents-export/agents.json | cut -f1))"
 else
