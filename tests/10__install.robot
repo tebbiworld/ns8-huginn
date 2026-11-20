@@ -27,7 +27,10 @@ Huginn answers behind Traefik
 Remember the secrets before the update
     Skip If    '${SCENARIO}' != 'update'    scenario is ${SCENARIO}
     ${cfg} =    Run task    module/${module_id}/get-configuration    {}
-    Should Not Be Empty    ${cfg['admin_password']}
+    # get-configuration stopped returning the secret itself in 1.4.0; it now
+    # reports admin_password_set. The password itself is remembered through the
+    # stored secret below, so the migration (not a regeneration) can be verified.
+    Should Be True    ${cfg['admin_password_set']}
     ${h} =    Secret hash    ${module_id}    SEED_PASSWORD
     Set Global Variable    ${ADMIN_PW_BEFORE}    ${h}
 
