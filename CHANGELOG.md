@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.4.1 — 2026-11-20
+
+### Security
+
+- **MariaDB 11.4.12 → 11.4.13.** Keeps the database on the current patch
+  release of the pinned 11.4 LTS series (latest-patch maintenance). In-place
+  upgrade within the same minor series — no dump/restore. The auto-release
+  upstream check tracks only the Huginn application image, so MariaDB does not
+  self-update.
+
 ## 1.4.0 — 2026-10-18
 
 ### Added
